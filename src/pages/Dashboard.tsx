@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { TrendingUp, DollarSign, PiggyBank, Plus, Zap, Target, Loader2, Link2, Upload } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { NetWorthCircle } from "@/components/NetWorthCircle";
@@ -46,17 +46,18 @@ export default function Dashboard() {
   const [transactions, setTransactions] = useState<ApiTransaction[]>([]);
   const [budgetData, setBudgetData] = useState<BudgetData | null>(null);
   const [goals, setGoals] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   
   const [surplusDeficit, setSurplusDeficit] = useState(0);
   const { user } = useUser();
 
-  const fetchedRef = (globalThis as any).__dashFetchedRef || { current: false };
-  (globalThis as any).__dashFetchedRef = fetchedRef;
+  const fetchedRef = useRef(false);
   useEffect(() => {
     if (!loading && api && !fetchedRef.current) {
       fetchedRef.current = true;
       fetchData();
+    } else if (!loading && api && fetchedRef.current) {
+      setIsLoading(false);
     }
   }, [loading, api]);
 
