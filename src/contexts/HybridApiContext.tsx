@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback, useRef } from 'react';
 import { initHybridAPI, type HybridAPI } from '@/lib/hybrid-api';
 import { toast } from 'sonner';
 
@@ -17,42 +17,66 @@ export function ApiProvider({ children }: { children: ReactNode }) {
   const [api, setApi] = useState<HybridAPI | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const DEBUG = (import.meta as any)?.env?.VITE_DEBUG_LOGS === 'true';
 
-  const initialize = async () => {
-    try {
-      setLoading(true);
-      const baseUrl = import.meta.env.DEV
-        ? '/api'
-        : (import.meta.env.VITE_API_BASE_URL || 'https://api.evercash.in');
-      console.log('🔄 Initializing Hybrid API (Actual Budget + Supabase):', baseUrl);
-      
-      const apiInstance = await initHybridAPI(baseUrl);
-      setApi(apiInstance);
-      
-      // Authenticate only if a real JWT exists AND an authenticated call succeeds
+  // refs to avoid stale closures and duplicate inits
+  const apiRef = useRef<HybridAPI | null>(null);
+  const isAuthRef = useRef(false);
+  useEffect(() => { apiRef.current = api; }, [api]);
+  useEffect(() => { isAuthRef.current = isAuthenticated; }, [isAuthenticated]);
+
+  const initializingRef = useRef(false);
+  const initPromiseRef = useRef<Promise<void> | null>(null);
+
+  const initialize = useCallback(async () => {
+    if (initializingRef.current) {
+      if (initPromiseRef.current) return initPromiseRef.current;
+      return;
+    }
+    initializingRef.current = true;
+    const run = (async () => {
       try {
-        const token = localStorage.getItem('actual-token');
-        const isJwt = !!token && /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/.test(token);
-        if (isJwt) {
-          // Authenticated endpoint (requires valid JWT)
-          await apiInstance.getAccounts();
-          setIsAuthenticated(true);
-          console.log('✅ Authenticated with hybrid API using JWT');
-        } else {
+        setLoading(true);
+        const baseUrl = import.meta.env.DEV
+          ? '/api'
+          : (import.meta.env.VITE_API_BASE_URL || 'https://api.evercash.in');
+        if (DEBUG) console.log('🔄 Initializing Hybrid API (Actual Budget + Supabase):', baseUrl);
+
+        // Avoid re-creating if already set
+        let apiInstance = apiRef.current;
+        if (!apiInstance) {
+          apiInstance = await initHybridAPI(baseUrl);
+          setApi(apiInstance);
+          apiRef.current = apiInstance;
+        }
+
+        // Authenticate only if a real JWT exists AND an authenticated call succeeds
+        try {
+          const token = localStorage.getItem('actual-token');
+          const isJwt = !!token && /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/.test(token);
+          if (isJwt && !isAuthRef.current) {
+            await apiInstance.getAccounts();
+            setIsAuthenticated(true);
+            isAuthRef.current = true;
+            if (DEBUG) console.log('✅ Authenticated with hybrid API using JWT');
+          }
+        } catch (err) {
+          if (DEBUG) console.warn('❌ Authentication check failed, user needs to login', err);
           setIsAuthenticated(false);
+          isAuthRef.current = false;
         }
       } catch (err) {
-        console.warn('❌ Authentication check failed, user needs to login', err);
-        setIsAuthenticated(false);
+        console.error('💥 Failed to initialize Hybrid API:', err);
+        toast.error('Failed to connect to server. Please check if the server is running.');
+      } finally {
+        setLoading(false);
+        initializingRef.current = false;
+        initPromiseRef.current = null;
       }
-      
-    } catch (err) {
-      console.error('💥 Failed to initialize Hybrid API:', err);
-      toast.error('Failed to connect to server. Please check if the server is running.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    })();
+    initPromiseRef.current = run;
+    return run;
+  }, [DEBUG]);
 
   const login = async (password: string) => {
     if (!api) {
@@ -85,7 +109,7 @@ export function ApiProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     initialize();
-  }, []);
+  }, [initialize]);
 
   return (
     <ApiContext.Provider value={{

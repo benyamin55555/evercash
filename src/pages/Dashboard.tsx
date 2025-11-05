@@ -39,6 +39,7 @@ export default function Dashboard() {
   const [targetInput, setTargetInput] = useState(netWorthTarget.toString());
   const [bankSyncOpen, setBankSyncOpen] = useState(false);
   const { api, loading } = useApi();
+  const DEBUG = (import.meta as any)?.env?.VITE_DEBUG_LOGS === 'true';
   const { theme } = useTheme();
   const { currentCurrency, setCurrency, formatAmount } = useSimpleCurrency();
   const [accounts, setAccounts] = useState<any[]>([]);
@@ -50,14 +51,14 @@ export default function Dashboard() {
   const [surplusDeficit, setSurplusDeficit] = useState(0);
   const { user } = useUser();
 
+  const fetchedRef = (globalThis as any).__dashFetchedRef || { current: false };
+  (globalThis as any).__dashFetchedRef = fetchedRef;
   useEffect(() => {
-    // Add delay to prevent rate limiting
-    const timer = setTimeout(() => {
+    if (!loading && api && !fetchedRef.current) {
+      fetchedRef.current = true;
       fetchData();
-    }, 100);
-    
-    return () => clearTimeout(timer);
-  }, []);
+    }
+  }, [loading, api]);
 
   // Refresh when other pages modify transactions (e.g., goals allocation)
   useEffect(() => {
@@ -86,24 +87,27 @@ export default function Dashboard() {
         setAccounts(accountsData);
         setTransactions(allTransactions);
         setGoals(goalsData || []);
-        
-        console.log('🎯 Goals loaded:', goalsData);
+        if (DEBUG) console.log('🎯 Goals loaded:', goalsData);
 
         // Calculate totals from all transactions (same as Reports page)
         let totalIncome = 0;
         let totalExpenses = 0;
 
-        console.log('🔍 DEBUGGING DASHBOARD CALCULATIONS (All Transactions)');
-        console.log('📊 All transactions:', allTransactions.length);
+        if (DEBUG) {
+          console.log('🔍 DEBUGGING DASHBOARD CALCULATIONS (All Transactions)');
+          console.log('📊 All transactions:', allTransactions.length);
+        }
         
         allTransactions.forEach(transaction => {
           const amountInDollars = transaction.amount || 0;
           
-          console.log('💰 Transaction:', {
-            date: transaction.date,
-            amount: amountInDollars,
-            payee: transaction.payee
-          });
+          if (DEBUG) {
+            console.log('💰 Transaction:', {
+              date: transaction.date,
+              amount: amountInDollars,
+              payee: transaction.payee
+            });
+          }
           
           // Count all transactions (same as Reports page)
           if (amountInDollars > 0) {
@@ -113,12 +117,12 @@ export default function Dashboard() {
           }
         });
 
-        console.log('📊 ALL TRANSACTIONS TOTALS - Income:', totalIncome, 'Expenses:', totalExpenses);
+        if (DEBUG) console.log('📊 ALL TRANSACTIONS TOTALS - Income:', totalIncome, 'Expenses:', totalExpenses);
 
         // Calculate surplus/deficit
         const surplus = totalIncome - totalExpenses;
         setSurplusDeficit(surplus);
-        console.log('💰 SURPLUS/DEFICIT:', surplus);
+        if (DEBUG) console.log('💰 SURPLUS/DEFICIT:', surplus);
 
         setBudgetData({
           incomeMonth: totalIncome,

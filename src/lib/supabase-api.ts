@@ -41,6 +41,8 @@ export class SupabaseAPI {
   // Simple in-memory TTL cache
   private cache = new Map<string, { value: any; expires: number }>();
   private cacheTTL = Number((import.meta as any)?.env?.VITE_CACHE_TTL_MS || 180000); // default 3 minutes
+  private pending = new Map<string, Promise<any>>();
+  private DEBUG = (import.meta as any)?.env?.VITE_DEBUG_LOGS === 'true';
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
@@ -82,15 +84,15 @@ export class SupabaseAPI {
 
     // Get fresh token each time
     const token = localStorage.getItem('actual-token');
-    console.log('🔑 Token from localStorage:', token ? `${token.substring(0, 20)}...` : 'null');
+    if (this.DEBUG) console.log('🔑 Token from localStorage:', token ? `${token.substring(0, 20)}...` : 'null');
     const isJwt = !!token && /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/.test(token);
     if (isJwt && token) {
       headers['Authorization'] = `Bearer ${token}`;
-      console.log('🔐 Authorization header set:', `Bearer ${token.substring(0, 20)}...`);
+      if (this.DEBUG) console.log('🔐 Authorization header set:', `Bearer ${token.substring(0, 20)}...`);
     } else if (token) {
-      console.warn('⚠️ Ignoring malformed token (not a JWT)');
+      if (this.DEBUG) console.warn('⚠️ Ignoring malformed token (not a JWT)');
     } else {
-      console.warn('⚠️ No token found in localStorage!');
+      if (this.DEBUG) console.warn('⚠️ No token found in localStorage!');
     }
 
     // If sending FormData, let the browser set the correct multipart boundary
@@ -150,14 +152,22 @@ export class SupabaseAPI {
     const cacheKey = 'accounts';
     const cached = this.getFromCache<SupabaseAccount[]>(cacheKey);
     if (cached) return cached;
-
-    const accounts = await this.request('/accounts');
-    const mapped = accounts.map((acc: any) => ({
-      ...acc,
-      balance: acc.balance / 100, // Convert from cents to dollars
-    }));
-    this.setCache(cacheKey, mapped);
-    return mapped;
+    if (this.pending.has(cacheKey)) return await this.pending.get(cacheKey);
+    const promise = (async () => {
+      try {
+        const accounts = await this.request('/accounts');
+        const mapped = accounts.map((acc: any) => ({
+          ...acc,
+          balance: acc.balance / 100, // Convert from cents to dollars
+        }));
+        this.setCache(cacheKey, mapped);
+        return mapped as SupabaseAccount[];
+      } finally {
+        this.pending.delete(cacheKey);
+      }
+    })();
+    this.pending.set(cacheKey, promise);
+    return await promise;
   }
 
   async createAccount(account: Partial<SupabaseAccount>): Promise<string> {
@@ -208,19 +218,29 @@ export class SupabaseAPI {
     const cacheKey = accountId ? `transactions:account:${accountId}` : 'transactions:all';
     const cached = this.getFromCache<SupabaseTransaction[]>(cacheKey);
     if (cached) return cached;
-
-    console.log('🔍 Fetching transactions from:', `${this.baseUrl}${url}`);
-    const transactions = await this.request(url);
-    console.log('📊 Raw transactions from Supabase:', transactions?.length || 0, 'transactions');
-    if (transactions?.length > 0) {
-      console.log('📋 Sample transaction:', transactions[0]);
-    }
-    const mapped = transactions.map((txn: any) => ({
-      ...txn,
-      amount: typeof txn.amount === 'number' ? txn.amount / 100 : txn.amount,
-    }));
-    this.setCache(cacheKey, mapped);
-    return mapped;
+    if (this.pending.has(cacheKey)) return await this.pending.get(cacheKey);
+    const promise = (async () => {
+      try {
+        if (this.DEBUG) console.log('🔍 Fetching transactions from:', `${this.baseUrl}${url}`);
+        const transactions = await this.request(url);
+        if (this.DEBUG) {
+          console.log('📊 Raw transactions from Supabase:', transactions?.length || 0, 'transactions');
+          if (transactions?.length > 0) {
+            console.log('📋 Sample transaction:', transactions[0]);
+          }
+        }
+        const mapped = transactions.map((txn: any) => ({
+          ...txn,
+          amount: typeof txn.amount === 'number' ? txn.amount / 100 : txn.amount,
+        }));
+        this.setCache(cacheKey, mapped);
+        return mapped as SupabaseTransaction[];
+      } finally {
+        this.pending.delete(cacheKey);
+      }
+    })();
+    this.pending.set(cacheKey, promise);
+    return await promise;
   }
 
   async createTransaction(transaction: any): Promise<string> {
@@ -297,9 +317,18 @@ export class SupabaseAPI {
     const cacheKey = 'goals';
     const cached = this.getFromCache<any[]>(cacheKey);
     if (cached) return cached;
-    const data = await this.request('/goals');
-    this.setCache(cacheKey, data);
-    return data;
+    if (this.pending.has(cacheKey)) return await this.pending.get(cacheKey);
+    const promise = (async () => {
+      try {
+        const data = await this.request('/goals');
+        this.setCache(cacheKey, data);
+        return data as any[];
+      } finally {
+        this.pending.delete(cacheKey);
+      }
+    })();
+    this.pending.set(cacheKey, promise);
+    return await promise;
   }
 
   async createGoal(goalData: any): Promise<any> {
@@ -332,9 +361,18 @@ export class SupabaseAPI {
     const cacheKey = 'categories';
     const cached = this.getFromCache<SupabaseCategory[]>(cacheKey);
     if (cached) return cached;
-    const data = await this.request('/categories');
-    this.setCache(cacheKey, data);
-    return data;
+    if (this.pending.has(cacheKey)) return await this.pending.get(cacheKey);
+    const promise = (async () => {
+      try {
+        const data = await this.request('/categories');
+        this.setCache(cacheKey, data);
+        return data as SupabaseCategory[];
+      } finally {
+        this.pending.delete(cacheKey);
+      }
+    })();
+    this.pending.set(cacheKey, promise);
+    return await promise;
   }
 
   async createCategory(category: Partial<SupabaseCategory>): Promise<string> {
@@ -361,9 +399,18 @@ export class SupabaseAPI {
     const cacheKey = `budgetmonth:${month}`;
     const cached = this.getFromCache<any>(cacheKey);
     if (cached) return cached;
-    const data = await this.request(`/budget/${month}`);
-    this.setCache(cacheKey, data);
-    return data;
+    if (this.pending.has(cacheKey)) return await this.pending.get(cacheKey);
+    const promise = (async () => {
+      try {
+        const data = await this.request(`/budget/${month}`);
+        this.setCache(cacheKey, data);
+        return data;
+      } finally {
+        this.pending.delete(cacheKey);
+      }
+    })();
+    this.pending.set(cacheKey, promise);
+    return await promise;
   }
 
   // CSV Import
