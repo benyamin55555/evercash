@@ -219,7 +219,22 @@ class SupabaseDB {
     const { data, error } = await this.client
       .from('accounts')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', userId);
+    if (error) {
+      return [];
+    }
+    if (!data || data.length === 0) {
+      try {
+        await this.ensureDemoAccount(userId);
+        const { data: refreshed } = await this.client
+          .from('accounts')
+          .select('*')
+          .eq('user_id', userId);
+        return refreshed || [];
+      } catch (_) {
+        return [];
+      }
+    }
     return data || [];
   }
 
@@ -238,6 +253,46 @@ class SupabaseDB {
     
     if (error) throw error;
     return data;
+  }
+
+  async ensureDemoAccount(userId) {
+    const { data: anyAcct, error: anyErr } = await this.client
+      .from('accounts')
+      .select('id')
+      .eq('user_id', userId)
+      .limit(1);
+    if (anyErr) {
+      return null;
+    }
+    if (anyAcct && anyAcct.length > 0) {
+      return null;
+    }
+
+    const { data: byName } = await this.client
+      .from('accounts')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('name', 'Account 1')
+      .limit(1);
+    if (byName && byName.length > 0) {
+      return null;
+    }
+
+    const { data, error } = await this.client
+      .from('accounts')
+      .insert([{ 
+        user_id: userId,
+        name: 'Account 1',
+        type: 'checking',
+        balance: 0,
+        closed: false
+      }])
+      .select()
+      .single();
+    if (error) {
+      return null;
+    }
+    return data || null;
   }
 
   async createGoal(userId, goalData) {
