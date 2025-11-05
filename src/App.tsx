@@ -41,10 +41,10 @@ function AuthenticatedApp() {
 
   // When token appears (after Google sign-in), ensure API session re-initializes
   useEffect(() => {
-    if (hasToken && !isAuthenticated) {
+    if (hasToken && !isAuthenticated && !loading) {
       retryConnection();
     }
-  }, [hasToken, isAuthenticated, retryConnection]);
+  }, [hasToken, isAuthenticated, loading, retryConnection]);
 
   // Removed onboarding Q&A popup; start tutorial instead from UI
 
