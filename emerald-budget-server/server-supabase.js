@@ -38,12 +38,8 @@ const FORCE_USER_ID = process.env.DEV_STATIC_USER_ID || process.env.FORCE_USER_I
 // Behind Railway proxy, trust 1 hop (safer than boolean true)
 app.set('trust proxy', 1);
 app.use(cors(securityConfig.cors));
-app.use((req, res, next) => {
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(204);
-  }
-  next();
-});
+// Express 5: use RegExp for global preflight handling so cors sets headers
+app.options(/.*/, cors(securityConfig.cors));
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
