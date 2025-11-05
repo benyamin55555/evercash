@@ -198,6 +198,14 @@ export class HybridAPI {
     await this.supabaseAPI.deleteAllTransactions();
   }
 
+  async createRazorpayOrder(amount: number, currency: string = 'INR', notes?: any): Promise<{ order_id: string; amount: number; currency: string; key_id: string; }> {
+    return await this.supabaseAPI.createRazorpayOrder(amount, currency, notes);
+  }
+
+  async verifyRazorpayPayment(payload: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string; }): Promise<void> {
+    await this.supabaseAPI.verifyRazorpayPayment(payload);
+  }
+
   // Categories - Store in Supabase, use Actual Budget for grouping logic
   async getCategories(): Promise<any[]> {
     const categories = await this.supabaseAPI.getCategories();

@@ -38,7 +38,12 @@ const FORCE_USER_ID = process.env.DEV_STATIC_USER_ID || process.env.FORCE_USER_I
 // Behind Railway proxy, trust 1 hop (safer than boolean true)
 app.set('trust proxy', 1);
 app.use(cors(securityConfig.cors));
-app.options('*', cors(securityConfig.cors));
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+  next();
+});
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
@@ -123,12 +128,37 @@ async function initializeServer() {
 const authenticateUser = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   console.log('🔍 Auth check - Authorization header:', authHeader ? `${authHeader.substring(0, 30)}...` : 'null');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    console.log('❌ Auth failed - No Bearer token found');
-    return res.status(401).json({ status: 'error', reason: 'unauthorized', details: 'token-not-found' });
+  const DEV_BYPASS = process.env.NODE_ENV !== 'production' && FORCE_USER_ID;
+  const hasBearer = !!authHeader && authHeader.startsWith('Bearer ');
+  if (!hasBearer) {
+    if (DEV_BYPASS) {
+      try {
+        req.user = { id: FORCE_USER_ID, email: `dev+${FORCE_USER_ID}@local`, token: null };
+        req.db = new SupabaseDB();
+        try { await req.db.ensureUserExists(req.user.id, req.user.email); } catch (e) { console.warn('ensureUserExists failed:', e?.message || e); }
+        try { await req.db.ensureDemoAccount(req.user.id); } catch (e) { console.warn('ensureDemoAccount failed:', e?.message || e); }
+        return next();
+      } catch (e) {
+        return res.status(401).json({ status: 'error', reason: 'unauthorized', details: 'dev-bypass-failed' });
+      }
+    } else {
+      console.log('❌ Auth failed - No Bearer token found');
+      return res.status(401).json({ status: 'error', reason: 'unauthorized', details: 'token-not-found' });
+    }
   }
   const token = authHeader.substring(7);
   if (!/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/.test(token)) {
+    if (DEV_BYPASS) {
+      try {
+        req.user = { id: FORCE_USER_ID, email: `dev+${FORCE_USER_ID}@local`, token: null };
+        req.db = new SupabaseDB();
+        try { await req.db.ensureUserExists(req.user.id, req.user.email); } catch (e) { console.warn('ensureUserExists failed:', e?.message || e); }
+        try { await req.db.ensureDemoAccount(req.user.id); } catch (e) { console.warn('ensureDemoAccount failed:', e?.message || e); }
+        return next();
+      } catch (e) {
+        return res.status(401).json({ status: 'error', reason: 'unauthorized', details: 'dev-bypass-failed' });
+      }
+    }
     return res.status(401).json({ status: 'error', reason: 'unauthorized', details: 'invalid-token-format' });
   }
 
@@ -372,7 +402,7 @@ app.post('/categories', authenticateUser, async (req, res) => {
 // Payees endpoints
 app.get('/payees', authenticateUser, async (req, res) => {
   try {
-    const payees = await db.getPayees(req.user.id);
+    const payees = await req.db.getPayees(req.user.id);
     res.json(payees);
   } catch (error) {
     console.error('Error fetching payees:', error);
@@ -848,6 +878,76 @@ app.post('/ai/pdfco/split', authenticateUser, async (req, res) => {
   } catch (err) {
     console.error('PDF.co split proxy error:', err);
     res.status(500).json({ status: 'error', message: 'Failed to split via PDF.co' });
+  }
+});
+
+function isIndiaRequest(req) {
+  const h = req.headers || {};
+  const country = ((h['x-country-code'] || h['x-vercel-ip-country'] || h['x-geo-country'] || h['cf-ipcountry'] || '') + '').toUpperCase();
+  const lang = (h['accept-language'] || '').toLowerCase();
+  const tz = (h['sec-ch-ua-timezone'] || '').toLowerCase();
+  if (country === 'IN') return true;
+  if (lang.includes('-in')) return true;
+  if (tz.includes('kolkata')) return true;
+  return false;
+}
+
+app.post('/payments/razorpay/order', authenticateUser, async (req, res) => {
+  try {
+    const keyId = process.env.RAZORPAY_KEY_ID;
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    if (!keyId || !keySecret) {
+      return res.status(500).json({ status: 'error', message: 'Razorpay keys not configured' });
+    }
+    const inIndia = isIndiaRequest(req);
+    const priceInr = Number(process.env.PREMIUM_PRICE_INR || '200');
+    const priceUsd = Number(process.env.PREMIUM_PRICE_USD || '4.99');
+    const decidedCurrency = inIndia ? 'INR' : 'USD';
+    const decidedAmount = inIndia ? priceInr : priceUsd;
+    const subunits = Math.round(decidedAmount * 100);
+    const notes = (req.body && req.body.notes) ? req.body.notes : { plan: 'premium_monthly' };
+    const auth = Buffer.from(`${keyId}:${keySecret}`).toString('base64');
+    const resp = await fetch('https://api.razorpay.com/v1/orders', {
+      method: 'POST',
+      headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: subunits, currency: decidedCurrency, receipt: `rcpt_${Date.now()}`, notes })
+    });
+    const text = await resp.text();
+    if (!resp.ok) {
+      return res.status(resp.status).json({ status: 'error', message: 'Failed to create Razorpay order', details: text.slice(0, 500) });
+    }
+    let order;
+    try { order = JSON.parse(text); } catch { order = {}; }
+    try { await req.db.createPaymentRecord(req.user.id, { order_id: order.id, amount: order.amount, currency: order.currency, status: order.status, notes: order.notes }); } catch {}
+    return res.json({ status: 'ok', order_id: order.id, amount: order.amount, currency: order.currency, key_id: keyId });
+  } catch (err) {
+    console.error('Razorpay order error:', err);
+    res.status(500).json({ status: 'error', message: 'Failed to create order' });
+  }
+});
+
+app.post('/payments/razorpay/verify', authenticateUser, async (req, res) => {
+  try {
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    if (!keySecret) {
+      return res.status(500).json({ status: 'error', message: 'Razorpay secret not configured' });
+    }
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body || {};
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ status: 'error', message: 'Missing verification fields' });
+    }
+    const shasum = crypto.createHmac('sha256', keySecret);
+    shasum.update(`${razorpay_order_id}|${razorpay_payment_id}`);
+    const digest = shasum.digest('hex');
+    const valid = digest === razorpay_signature;
+    if (!valid) {
+      return res.status(400).json({ status: 'error', message: 'Invalid signature' });
+    }
+    try { await req.db.markPaymentVerified(req.user.id, razorpay_order_id, razorpay_payment_id, razorpay_signature); } catch {}
+    return res.json({ status: 'ok' });
+  } catch (err) {
+    console.error('Razorpay verify error:', err);
+    res.status(500).json({ status: 'error', message: 'Failed to verify payment' });
   }
 });
 

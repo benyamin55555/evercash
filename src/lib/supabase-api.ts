@@ -429,6 +429,31 @@ export class SupabaseAPI {
     this.invalidateCache(['transactions:all', `transactions:account:${accountId}`, 'accounts']);
     return { imported: response.imported };
   }
+
+  async createRazorpayOrder(amount: number, currency: string = 'INR', notes?: any): Promise<{ order_id: string; amount: number; currency: string; key_id: string; }> {
+    let country = '';
+    try {
+      const tz = (Intl && Intl.DateTimeFormat && Intl.DateTimeFormat().resolvedOptions().timeZone) || '';
+      if (typeof tz === 'string' && tz.toLowerCase().includes('kolkata')) country = 'IN';
+    } catch {}
+    try {
+      const lang = (navigator && ((navigator as any).languages?.[0] || (navigator as any).language)) || '';
+      if (typeof lang === 'string' && /(^|[-_])in$/i.test(lang)) country = 'IN';
+    } catch {}
+    const response = await this.request('/payments/razorpay/order', {
+      method: 'POST',
+      headers: country ? { 'x-country-code': country } : undefined,
+      body: JSON.stringify({ amount, currency, notes })
+    });
+    return { order_id: response.order_id, amount: response.amount, currency: response.currency, key_id: response.key_id };
+  }
+
+  async verifyRazorpayPayment(payload: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string; }): Promise<void> {
+    await this.request('/payments/razorpay/verify', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
 }
 
 // Global instance

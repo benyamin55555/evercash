@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { User, Shield, Database, CreditCard, Crown, Moon, Sun, Download, FileText, Sparkles } from "lucide-react";
+import { User, Shield, Database, CreditCard, Crown, Moon, Sun, Download, FileText, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
+import { useApi } from "@/contexts/HybridApiContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -17,8 +18,10 @@ export default function Settings() {
   const { theme, toggleTheme } = useTheme();
   const { user, setUser } = useUser();
   const { user: authUser, signOut } = useAuth();
+  const { api } = useApi();
   const [nameInput, setNameInput] = useState(user?.name || '');
   const [comingSoonOpen, setComingSoonOpen] = useState(false);
+  const [isPaying, setIsPaying] = useState(false);
 
   // Update inputs when user changes
   useEffect(() => {
@@ -35,6 +38,58 @@ export default function Settings() {
         title: "Profile Updated",
         description: "Your profile information has been saved.",
       });
+    }
+  };
+
+  const loadRazorpay = () => new Promise<void>((resolve, reject) => {
+    if ((window as any).Razorpay) return resolve();
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Failed to load Razorpay')); 
+    document.body.appendChild(script);
+  });
+
+  const handleUpgrade = async () => {
+    if (!api) return;
+    setIsPaying(true);
+    try {
+      await loadRazorpay();
+      const amount = 4.99; // USD dollars
+      const order = await api.createRazorpayOrder(amount, 'USD', { plan: 'premium_monthly' });
+      const rzp = new (window as any).Razorpay({
+        key: order.key_id,
+        amount: order.amount,
+        currency: order.currency,
+        name: 'Evercash',
+        description: 'Premium Upgrade',
+        order_id: order.order_id,
+        prefill: {
+          name: user?.name || authUser?.email || 'User',
+          email: authUser?.email || '',
+        },
+        theme: { color: '#10b981' },
+        handler: async (response: any) => {
+          try {
+            await api.verifyRazorpayPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+            toast({ title: 'Payment successful', description: 'Thanks for upgrading to Premium!' });
+          } catch (err) {
+            toast({ title: 'Verification failed', description: 'Please contact support.', variant: 'destructive' as any });
+          }
+        },
+      });
+      rzp.on('payment.failed', () => {
+        toast({ title: 'Payment failed', description: 'Your payment could not be completed.', variant: 'destructive' as any });
+      });
+      rzp.open();
+    } catch (e: any) {
+      toast({ title: 'Unable to start payment', description: e?.message || 'Please try again later.', variant: 'destructive' as any });
+    } finally {
+      setIsPaying(false);
     }
   };
   return (
@@ -172,9 +227,18 @@ export default function Settings() {
           <p className="text-muted-foreground mb-6">
             Unlock advanced features including AI-powered insights, unlimited envelopes, and priority support.
           </p>
-          <Button className="bg-gradient-emerald hover:opacity-90 transition-opacity shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5)]">
-            <CreditCard className="w-5 h-5 mr-2" />
-            Upgrade Now
+          <Button onClick={handleUpgrade} disabled={isPaying} className="bg-gradient-emerald hover:opacity-90 transition-opacity shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5)]">
+            {isPaying ? (
+              <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <CreditCard className="w-5 h-5 mr-2" />
+                Upgrade Now
+              </>
+            )}
           </Button>
         </div>
       </div>
