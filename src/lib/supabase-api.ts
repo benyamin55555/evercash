@@ -160,7 +160,9 @@ export class SupabaseAPI {
           ...acc,
           balance: acc.balance / 100, // Convert from cents to dollars
         }));
-        this.setCache(cacheKey, mapped);
+        if (Array.isArray(mapped) && mapped.length > 0) {
+          this.setCache(cacheKey, mapped);
+        }
         return mapped as SupabaseAccount[];
       } finally {
         this.pending.delete(cacheKey);

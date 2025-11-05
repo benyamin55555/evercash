@@ -141,6 +141,7 @@ const authenticateUser = async (req, res, next) => {
     req.user = { id: data.user.id, email: data.user.email, token };
     req.db = new SupabaseDB(getUserClient(token));
     try { await req.db.ensureUserExists(req.user.id, req.user.email); } catch (e) { console.warn('ensureUserExists failed:', e?.message || e); }
+    try { await req.db.ensureDemoAccount(req.user.id); } catch (e) { console.warn('ensureDemoAccount failed:', e?.message || e); }
     return next();
   } catch (e) {
     console.error('❌ Auth verify error:', e);
