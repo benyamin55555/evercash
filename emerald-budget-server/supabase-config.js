@@ -703,6 +703,40 @@ class SupabaseDB {
     if (error) throw error;
   }
 
+  async createPaymentRecord(userId, payload) {
+    const { data, error } = await this.client
+      .from('payments')
+      .insert([{ 
+        user_id: userId,
+        razorpay_order_id: payload.order_id,
+        amount: payload.amount,
+        currency: payload.currency,
+        status: payload.status || 'created',
+        notes: payload.notes || null
+      }])
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async markPaymentVerified(userId, orderId, paymentId, signature) {
+    const { data, error } = await this.client
+      .from('payments')
+      .update({ 
+        razorpay_payment_id: paymentId,
+        razorpay_signature: signature,
+        status: 'paid',
+        updated_at: new Date()
+      })
+      .eq('user_id', userId)
+      .eq('razorpay_order_id', orderId)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
   // Category operations
   async getCategories(userId) {
     const { data, error } = await this.client
