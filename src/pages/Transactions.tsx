@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { TransactionItem } from "@/components/TransactionItem";
@@ -65,6 +66,7 @@ export default function Transactions() {
     notes: "",
     type: 'expense' as 'expense' | 'income',
   });
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     if (api) {
@@ -99,6 +101,20 @@ export default function Transactions() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const openTransactionDetails = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setFormData({
+      account: transaction.account,
+      payee: transaction.payee,
+      category: transaction.category,
+      amount: Math.abs(transaction.amount),
+      date: transaction.date,
+      notes: transaction.notes || "",
+      type: transaction.amount < 0 ? 'expense' : 'income',
+    });
+    setEditDialogOpen(true);
   };
 
   const handleCreateTransaction = async () => {
@@ -306,6 +322,29 @@ export default function Transactions() {
       return accountMap.get(accountId) || accountId;
     };
   }, [accounts]);
+
+  // Handle deep-linking from Dashboard (payee filter or direct txId)
+  useEffect(() => {
+    if (isLoading) return;
+    const txId = searchParams.get('txId');
+    const payeeName = searchParams.get('payee');
+    if (txId) {
+      const tx = transactions.find(t => t.id === txId);
+      if (tx) {
+        openTransactionDetails(tx);
+      }
+      return;
+    }
+    if (payeeName) {
+      try { setSearchTerm(payeeName); } catch {}
+      const latest = [...transactions]
+        .filter(t => getPayeeName(t.payee) === payeeName)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+      if (latest) {
+        openTransactionDetails(latest);
+      }
+    }
+  }, [isLoading, transactions, searchParams]);
 
   // Calculate counts for filter cards
   const incomeCount = transactions.filter(tx => tx.amount > 0).length;

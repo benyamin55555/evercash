@@ -47,6 +47,18 @@ export default function Dashboard() {
   const [budgetData, setBudgetData] = useState<BudgetData | null>(null);
   const [goals, setGoals] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [visibleGoalCount, setVisibleGoalCount] = useState(2);
+  useEffect(() => {
+    const w = typeof window !== 'undefined' ? window.innerWidth : 1024;
+    const c = w >= 1024 ? 6 : w >= 768 ? 4 : 2;
+    setVisibleGoalCount(c);
+    const onResize = () => {
+      const ww = window.innerWidth;
+      setVisibleGoalCount(ww >= 1024 ? 6 : ww >= 768 ? 4 : 2);
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
   
   const [surplusDeficit, setSurplusDeficit] = useState(0);
   const { user } = useUser();
@@ -325,6 +337,7 @@ export default function Dashboard() {
                 .slice(0, 3)
                 .map(([name, value]) => ({ name, value: formatAmount(value) }));
             })()}
+            onContributorClick={(name) => navigate(`/transactions?payee=${encodeURIComponent(name)}`)}
           />
           <StatCard
             title="Monthly Expenses"
@@ -343,6 +356,7 @@ export default function Dashboard() {
                 .slice(0, 3)
                 .map(([name, value]) => ({ name, value: formatAmount(value) }));
             })()}
+            onContributorClick={(name) => navigate(`/transactions?payee=${encodeURIComponent(name)}`)}
           />
         </div>
         
@@ -398,6 +412,7 @@ export default function Dashboard() {
                 .slice(0, 3)
                 .map(([name, value]) => ({ name, value: formatAmount(value) }));
             })()}
+            onContributorClick={(name) => navigate(`/transactions?payee=${encodeURIComponent(name)}`)}
           />
           <StatCard
             title="Monthly Expenses"
@@ -416,6 +431,7 @@ export default function Dashboard() {
                 .slice(0, 3)
                 .map(([name, value]) => ({ name, value: formatAmount(value) }));
             })()}
+            onContributorClick={(name) => navigate(`/transactions?payee=${encodeURIComponent(name)}`)}
           />
           <StatCard
             title="Savings Rate"
@@ -466,7 +482,7 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {goals.slice(0, 2).map((goal, index) => {
+              {goals.slice(0, visibleGoalCount).map((goal, index) => {
                 const progress = goal.current_amount && goal.target_amount 
                   ? Math.min((goal.current_amount / goal.target_amount) * 100, 100)
                   : 0;
@@ -496,9 +512,14 @@ export default function Dashboard() {
                   </div>
                 );
               })}
-              {goals.length > 2 && (
+              {goals.length > visibleGoalCount && (
                 <div className="col-span-full text-center mt-2">
-                  <p className="text-xs text-muted-foreground">+{goals.length - 2} more goals</p>
+                  <button
+                    className="text-xs text-accent hover:underline cursor-pointer"
+                    onClick={() => navigate('/goals')}
+                  >
+                    +{goals.length - visibleGoalCount} more goals
+                  </button>
                 </div>
               )}
             </div>
