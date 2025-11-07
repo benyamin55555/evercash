@@ -20,29 +20,29 @@ export default function Landing() {
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
       {/* Animated gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-gray-900 dark:via-emerald-950 dark:to-gray-900">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(16,185,129,0.1),transparent_50%)] animate-pulse" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(123,239,45,0.1),transparent_50%)] animate-pulse" />
       </div>
 
       {/* Floating money icons - Left side */}
       <div className="absolute left-10 top-20 animate-float-slow">
-        <DollarSign className="w-12 h-12 text-emerald-400/30" />
+        <DollarSign className="w-12 h-12 text-[#7BEF2D]/30" />
       </div>
       <div className="absolute left-20 bottom-32 animate-float-slower">
         <PiggyBank className="w-16 h-16 text-teal-400/30" />
       </div>
       <div className="absolute left-32 top-1/2 animate-float">
-        <Wallet className="w-10 h-10 text-emerald-500/30" />
+        <Wallet className="w-10 h-10 text-[#7BEF2D]/30" />
       </div>
 
       {/* Floating money icons - Right side */}
       <div className="absolute right-16 top-32 animate-float">
-        <TrendingUp className="w-14 h-14 text-emerald-400/30" />
+        <TrendingUp className="w-14 h-14 text-[#7BEF2D]/30" />
       </div>
       <div className="absolute right-24 bottom-24 animate-float-slow">
         <Sparkles className="w-12 h-12 text-teal-400/30" />
       </div>
       <div className="absolute right-40 top-2/3 animate-float-slower">
-        <DollarSign className="w-10 h-10 text-emerald-500/30" />
+        <DollarSign className="w-10 h-10 text-[#7BEF2D]/30" />
       </div>
 
       {/* Floating coins */}
@@ -60,11 +60,11 @@ export default function Landing() {
 
       {/* Main card */}
       <div className="relative z-10 w-full max-w-md mx-4 animate-fade-in-up">
-        <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border-2 border-emerald-500 p-8 space-y-8">
+        <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border-2 border-[#7BEF2D] p-8 space-y-8">
           {/* Logo & Title */}
           <div className="text-center space-y-4">
             <div>
-              <h1 className="text-4xl font-extrabold !text-emerald-600">
+              <h1 className="text-4xl font-extrabold !text-[#7BEF2D]">
                 EVERCASH
               </h1>
               <p className="text-sm !text-black dark:text-gray-300 mt-2 font-bold">
@@ -88,7 +88,7 @@ export default function Landing() {
             <Button
               onClick={handleSignIn}
               disabled={loading}
-              className="w-full h-14 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 !text-black dark:text-white border-2 border-gray-800 dark:border-gray-600 hover:border-emerald-500 dark:hover:border-gray-500 transition-all duration-300 shadow-md hover:shadow-lg group"
+              className="w-full h-14 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 !text-black dark:text-white border-2 border-gray-800 dark:border-gray-600 hover:border-[#7BEF2D] dark:hover:border-gray-500 transition-all duration-300 shadow-md hover:shadow-lg group"
             >
               {loading ? (
                 <>
@@ -111,7 +111,7 @@ export default function Landing() {
 
           {/* Security badge */}
           <div className="text-center space-y-2">
-            <div className="flex items-center justify-center gap-2 text-emerald-600 dark:text-emerald-400">
+            <div className="flex items-center justify-center gap-2 text-[#7BEF2D] dark:text-[#7BEF2D]">
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>

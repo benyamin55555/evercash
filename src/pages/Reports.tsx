@@ -210,15 +210,15 @@ export default function Reports() {
   const { theme } = useTheme();
   const colors = theme === 'dark'
     ? [
-        '#39FF14', '#00E6F6', '#FF00C8', '#FFD600', '#FF3C00', '#00FFB3',
-        '#A020F0', '#FF1744', '#00FFEA', '#FFB300', '#00FF57', '#FF61A6'
+        '#7BEF2D', '#00E6F6', '#FF00C8', '#FFD600', '#FF3C00', '#00FFB3',
+        '#A020F0', '#FF1744', '#00FFEA', '#FFB300', '#7BEF2D', '#FF61A6'
       ]
     : [
-        '#1A7F5A', '#2AB67C', '#3FCF8E', '#6EE7B7', '#A7F3D0', '#D1FAE5',
-        '#15803D', '#059669', '#10B981', '#34D399', '#6EE7B7', '#A7F3D0'
+        '#7BEF2D', '#2AB67C', '#3FCF8E', '#6EE7B7', '#A7F3D0', '#D1FAE5',
+        '#7BEF2D', '#7BEF2D', '#7BEF2D', '#34D399', '#6EE7B7', '#A7F3D0'
       ];
   // Consistent colors for income/expenses bars
-  const incomeColor = theme === 'dark' ? '#22C55E' : '#10B981'; // emerald
+  const incomeColor = '#7BEF2D';
   const expenseColor = theme === 'dark' ? '#F87171' : '#EF4444'; // red
   const neutralColor = theme === 'dark' ? '#94A3B8' : '#64748B'; // slate
 

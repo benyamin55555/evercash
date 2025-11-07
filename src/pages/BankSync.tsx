@@ -154,7 +154,7 @@ export default function BankSync() {
         </div>
         <Button 
           onClick={() => setSyncModalOpen(true)}
-          className="bg-gradient-emerald hover:opacity-90 transition-opacity shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+          className="bg-gradient-emerald hover:opacity-90 transition-opacity shadow-[0_0_20px_rgba(123,239,45,0.3)]"
         >
           <Link2 className="w-5 h-5 mr-2" />
           Add Connection

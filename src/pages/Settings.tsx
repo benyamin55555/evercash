@@ -68,7 +68,7 @@ export default function Settings() {
           name: user?.name || authUser?.email || 'User',
           email: authUser?.email || '',
         },
-        theme: { color: '#10b981' },
+        theme: { color: '#7BEF2D' },
         handler: async (response: any) => {
           try {
             await api.verifyRazorpayPayment({
@@ -227,7 +227,7 @@ export default function Settings() {
           <p className="text-muted-foreground mb-6">
             Unlock advanced features including AI-powered insights, unlimited envelopes, and priority support.
           </p>
-          <Button onClick={handleUpgrade} disabled={isPaying} className="bg-gradient-emerald hover:opacity-90 transition-opacity shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5)]">
+          <Button onClick={handleUpgrade} disabled={isPaying} className="bg-gradient-emerald hover:opacity-90 transition-opacity shadow-[0_0_20px_rgba(123,239,45,0.3)] hover:shadow-[0_0_30px_rgba(123,239,45,0.5)]">
             {isPaying ? (
               <>
                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />

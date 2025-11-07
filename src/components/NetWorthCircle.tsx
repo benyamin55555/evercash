@@ -27,14 +27,14 @@ export function NetWorthCircle({ netWorth, target, surplusDeficit, editingTarget
 
   const COLORS = theme === 'dark' 
     ? ["#7BEF2D", "rgba(255,255,255,0.06)"] 
-    : ["hsl(158 64% 20%)", "hsl(220 16% 22%)"];
+    : ["#7BEF2D", "rgba(0,0,0,0.08)"];
 
   return (
     <div className="glass-card p-8 rounded-2xl animate-scale-in relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-emerald-subtle opacity-20"></div>
       <div className="relative">
         <h2 className="text-lg font-semibold mb-6 text-center">Net Worth</h2>
-        <div className={`relative ${theme === 'dark' ? 'drop-shadow-[0_0_30px_rgba(34,197,94,0.4)]' : ''}`}>
+        <div className={`relative ${theme === 'dark' ? 'drop-shadow-[0_0_30px_rgba(123,239,45,0.4)]' : ''}`}>
           <ResponsiveContainer width="100%" height={240}>
             <PieChart>
               <Pie

@@ -48,37 +48,37 @@ All colors MUST be HSL.
   /* Light theme (emerald) */
   [data-theme="light"] {
     --background: 40 25% 96%;
-    --foreground: 220 13% 13%;
+    --foreground: 0 0% 0%;
     --card: 40 30% 98%;
-    --card-foreground: 220 13% 13%;
+    --card-foreground: 0 0% 0%;
     --popover: 40 30% 98%;
-    --popover-foreground: 220 13% 13%;
+    --popover-foreground: 0 0% 0%;
     --primary: 158 64% 20%;
     --primary-foreground: 40 30% 98%;
-    --secondary: 158 50% 25%;
-    --secondary-foreground: 40 30% 98%;
+    --secondary: 96 86% 56%;
+    --secondary-foreground: 0 0% 0%;
     --muted: 40 20% 90%;
     --muted-foreground: 220 13% 25%; /* Much darker - was 46%, now 25% */
-    --accent: 158 64% 20%;
-    --accent-foreground: 40 30% 98%;
+    --accent: 96 86% 56%;
+    --accent-foreground: 0 0% 0%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 40 30% 98%;
     --border: 40 15% 88%;
     --input: 40 20% 92%;
-    --ring: 158 64% 20%;
+    --ring: 96 86% 56%;
     --glass-bg: 40 30% 98% / 0.6;
-    --glass-border: 158 64% 20% / 0.15;
-    --gradient-emerald: linear-gradient(135deg, hsl(158 64% 20%), hsl(158 50% 25%));
-    --gradient-emerald-subtle: linear-gradient(135deg, hsl(158 64% 20% / 0.08), hsl(158 50% 25% / 0.12));
-    --glow-emerald: 0 0 20px hsl(158 64% 20% / 0.25);
+    --glass-border: 96 86% 56% / 0.15;
+    --gradient-emerald: linear-gradient(135deg, hsl(96 86% 56%), hsl(96 86% 40%));
+    --gradient-emerald-subtle: linear-gradient(135deg, hsl(96 86% 56% / 0.08), hsl(96 86% 40% / 0.12));
+    --glow-emerald: 0 0 20px hsl(96 86% 56% / 0.25);
     --sidebar-background: 40 30% 98%;
-    --sidebar-foreground: 220 13% 13%;
-    --sidebar-primary: 158 64% 20%;
+    --sidebar-foreground: 0 0% 0%;
+    --sidebar-primary: 96 86% 56%;
     --sidebar-primary-foreground: 40 30% 98%;
     --sidebar-accent: 40 25% 93%;
-    --sidebar-accent-foreground: 220 13% 13%;
+    --sidebar-accent-foreground: 0 0% 0%;
     --sidebar-border: 40 15% 88%;
-    --sidebar-ring: 158 64% 20%;
+    --sidebar-ring: 96 86% 56%;
   }
 }
 
@@ -111,6 +111,48 @@ All colors MUST be HSL.
   [data-theme="dark"] .to-green-400 { --tw-gradient-to: #7BEF2D var(--tw-gradient-to-position); }
   [data-theme="dark"] .from-green-500\/10 { --tw-gradient-from: rgba(123,239,45,0.10) var(--tw-gradient-from-position); }
   [data-theme="dark"] .to-green-400\/20 { --tw-gradient-to: rgba(123,239,45,0.20) var(--tw-gradient-to-position); }
+
+  /* Light theme emerald/green overrides to #7BEF2D */
+  [data-theme="light"] .text-emerald-400,
+  [data-theme="light"] .text-emerald-500,
+  [data-theme="light"] .text-emerald-600,
+  [data-theme="light"] .text-green-500,
+  [data-theme="light"] .text-green-600 { color: #7BEF2D !important; }
+
+  [data-theme="light"] .bg-emerald-500,
+  [data-theme="light"] .bg-emerald-600,
+  [data-theme="light"] .bg-green-500,
+  [data-theme="light"] .bg-green-600 { background-color: #7BEF2D !important; }
+
+  [data-theme="light"] .bg-emerald-500\/10 { background-color: rgba(123,239,45,0.10) !important; }
+  [data-theme="light"] .bg-emerald-500\/15 { background-color: rgba(123,239,45,0.15) !important; }
+  [data-theme="light"] .bg-green-500\/10 { background-color: rgba(123,239,45,0.10) !important; }
+
+  [data-theme="light"] .border-emerald-500,
+  [data-theme="light"] .border-emerald-600,
+  [data-theme="light"] .border-green-500,
+  [data-theme="light"] .border-green-600 { border-color: #7BEF2D !important; }
+
+  [data-theme="light"] .border-emerald-500\/20 { border-color: rgba(123,239,45,0.20) !important; }
+  [data-theme="light"] .border-emerald-500\/30 { border-color: rgba(123,239,45,0.30) !important; }
+  [data-theme="light"] .border-green-500\/20 { border-color: rgba(123,239,45,0.20) !important; }
+
+  [data-theme="light"] .ring-emerald-500,
+  [data-theme="light"] .ring-green-500 { --tw-ring-color: #7BEF2D !important; }
+
+  [data-theme="light"] .from-emerald-600 { 
+    --tw-gradient-from: #7BEF2D var(--tw-gradient-from-position);
+    --tw-gradient-to: rgb(123 239 45 / 0) var(--tw-gradient-to-position);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+  [data-theme="light"] .to-emerald-500 { --tw-gradient-to: #7BEF2D var(--tw-gradient-to-position); }
+  [data-theme="light"] .from-emerald-500\/8 { 
+    --tw-gradient-from: rgba(123,239,45,0.08) var(--tw-gradient-from-position);
+    --tw-gradient-to: rgb(123 239 45 / 0) var(--tw-gradient-to-position);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+  [data-theme="light"] .to-emerald-400\/5 { --tw-gradient-to: rgba(123,239,45,0.05) var(--tw-gradient-to-position); }
+  [data-theme="light"] .to-emerald-400\/20 { --tw-gradient-to: rgba(123,239,45,0.20) var(--tw-gradient-to-position); }
 }
 
 @layer base {
@@ -150,26 +192,15 @@ All colors MUST be HSL.
     }
   }
   
-  /* Light theme text improvements for better contrast */
+  /* Light theme text overrides - make ALL text black */
   [data-theme="light"] {
     h1, h2, h3, h4, h5, h6,
-    p, span, div, label, button {
-      color: inherit;
+    p, span, div, label, button, a, small, strong, em,
+    li, th, td, code, svg {
+      color: hsl(0 0% 0%) !important;
     }
-    
-    /* Ensure secondary text is dark enough to read */
-    .text-muted-foreground {
-      color: hsl(220 13% 25%) !important; /* Dark gray instead of light gray */
-    }
-    
-    /* Make sure small text is readable */
-    .text-xs {
-      color: hsl(220 13% 30%) !important;
-    }
-    
-    /* Card descriptions and subtitles */
-    .text-sm.text-muted-foreground {
-      color: hsl(220 13% 20%) !important;
-    }
+    .text-foreground { color: hsl(0 0% 0%) !important; }
+    .text-muted-foreground { color: hsl(0 0% 0%) !important; }
+    .text-xs { color: hsl(0 0% 0%) !important; }
   }
 }

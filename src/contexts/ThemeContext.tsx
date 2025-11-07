@@ -45,20 +45,23 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } else {
       // Light emerald theme
       root.style.setProperty('--background', '40 25% 96%');
-      root.style.setProperty('--foreground', '220 13% 13%');
+      root.style.setProperty('--foreground', '0 0% 0%');
       root.style.setProperty('--card', '40 30% 98%');
-      root.style.setProperty('--card-foreground', '220 13% 13%');
+      root.style.setProperty('--card-foreground', '0 0% 0%');
+      // Optional: keep popover text black as well
+      root.style.setProperty('--popover', '40 30% 98%');
+      root.style.setProperty('--popover-foreground', '0 0% 0%');
       root.style.setProperty('--primary', '158 64% 20%');
       root.style.setProperty('--primary-foreground', '40 30% 98%');
-      root.style.setProperty('--secondary', '158 50% 25%');
-      root.style.setProperty('--secondary-foreground', '40 30% 98%');
+      root.style.setProperty('--secondary', '96 86% 56%');
+      root.style.setProperty('--secondary-foreground', '0 0% 0%');
       root.style.setProperty('--muted', '40 20% 90%');
       root.style.setProperty('--muted-foreground', '220 9% 46%');
-      root.style.setProperty('--accent', '158 64% 20%');
-      root.style.setProperty('--accent-foreground', '40 30% 98%');
+      root.style.setProperty('--accent', '96 86% 56%');
+      root.style.setProperty('--accent-foreground', '0 0% 0%');
       root.style.setProperty('--border', '40 15% 88%');
       root.style.setProperty('--input', '40 20% 92%');
-      root.style.setProperty('--ring', '158 64% 20%');
+      root.style.setProperty('--ring', '96 86% 56%');
     }
   }, [theme]);
 
