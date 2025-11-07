@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { TrendingUp, DollarSign, PiggyBank, Plus, Zap, Target, Loader2, Link2, Upload } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { NetWorthCircle } from "@/components/NetWorthCircle";
@@ -16,7 +16,7 @@ import { useUser } from "@/contexts/UserContext";
  
 // Removed CurrencySelector and ThemeToggle from dashboard header
 import { toast } from "sonner";
-import type { Account as ApiAccount, Transaction as ApiTransaction } from "@/lib/api";
+import type { Account as ApiAccount, Transaction as ApiTransaction, Category, Payee } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
 import { CurrencySelector } from "@/components/CurrencySelector";
 import { MobileNavButton } from "@/components/MobileNav";
@@ -46,6 +46,8 @@ export default function Dashboard() {
   const [transactions, setTransactions] = useState<ApiTransaction[]>([]);
   const [budgetData, setBudgetData] = useState<BudgetData | null>(null);
   const [goals, setGoals] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [payees, setPayees] = useState<Payee[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [visibleGoalCount, setVisibleGoalCount] = useState(2);
   useEffect(() => {
@@ -90,16 +92,20 @@ export default function Dashboard() {
         const currentMonthNum = now.getMonth() + 1;
 
         // Fetch all required data in parallel
-        const [accountsData, budgetMonth, allTransactions, goalsData] = await Promise.all([
+        const [accountsData, budgetMonth, allTransactions, goalsData, categoriesData, payeesData] = await Promise.all([
           api.getAccounts(),
           api.getBudgetMonth(currentMonth),
           api.getTransactions(), // Get all transactions, then filter
-          api.getGoals() // Fetch user's goals
+          api.getGoals(), // Fetch user's goals
+          api.getCategories(),
+          api.getPayees()
         ]);
 
         setAccounts(accountsData);
         setTransactions(allTransactions);
         setGoals(goalsData || []);
+        setCategories(categoriesData || []);
+        setPayees(payeesData || []);
         if (DEBUG) console.log('🎯 Goals loaded:', goalsData);
 
         // Calculate totals from all transactions (same as Reports page)
@@ -197,6 +203,27 @@ export default function Dashboard() {
   const netWorth = ((accounts || [])
     .filter((a: any) => !a.closed)
     .reduce((sum: number, a: any) => sum + (a.balance ?? 0), 0)) || 0;
+
+  const getPayeeName = useMemo(() => {
+    const map = new Map<string, string>();
+    payees.forEach(p => map.set(p.id, p.name));
+    return (id: string) => {
+      if (!id) return 'Unknown';
+      return map.get(id) || id;
+    };
+  }, [payees]);
+
+  const getCategoryName = useMemo(() => {
+    const map = new Map<string, string>();
+    categories.forEach(c => {
+      map.set(c.id, c.name);
+      map.set(c.name, c.name);
+    });
+    return (key: string) => {
+      if (!key) return 'other';
+      return map.get(key) || key;
+    };
+  }, [categories]);
 
   // Get the 5 most recent transactions
   const recentTransactions = [...transactions]
@@ -329,7 +356,7 @@ export default function Dashboard() {
               const incomeTxs = transactions.filter(tx => (tx.amount || 0) > 0);
               const byPayee: Record<string, number> = {};
               incomeTxs.forEach(tx => {
-                const name = tx.payee || 'Other';
+                const name = getPayeeName(tx.payee) || 'Other';
                 byPayee[name] = (byPayee[name] || 0) + tx.amount;
               });
               return Object.entries(byPayee)
@@ -348,7 +375,7 @@ export default function Dashboard() {
               const expenseTxs = transactions.filter(tx => (tx.amount || 0) < 0);
               const byPayee: Record<string, number> = {};
               expenseTxs.forEach(tx => {
-                const name = tx.payee || 'Other';
+                const name = getPayeeName(tx.payee) || 'Other';
                 byPayee[name] = (byPayee[name] || 0) + Math.abs(tx.amount);
               });
               return Object.entries(byPayee)
@@ -369,7 +396,7 @@ export default function Dashboard() {
             // Top 3 categories by net positive (income - expense) (all transactions)
             const byCategory: Record<string, number> = {};
             transactions.forEach(tx => {
-              const cat = tx.category || 'Other';
+              const cat = getCategoryName(tx.category) || 'Other';
               byCategory[cat] = (byCategory[cat] || 0) + tx.amount;
             });
             return Object.entries(byCategory)
@@ -580,7 +607,7 @@ export default function Dashboard() {
       }`}>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold">Recent Transactions</h2>
-          <button className="text-accent hover:text-accent/80 font-semibold text-sm transition-colors">
+          <button className="text-accent hover:text-accent/80 font-semibold text-sm transition-colors" onClick={() => navigate('/transactions')}>
             View All
           </button>
         </div>
@@ -588,8 +615,8 @@ export default function Dashboard() {
           {recentTransactions.map((transaction) => (
             <TransactionItem 
               key={transaction.id}
-              merchant={transaction.payee}
-              category={transaction.category || 'other'}
+              merchant={getPayeeName(transaction.payee)}
+              category={getCategoryName(transaction.category) || 'other'}
               amount={transaction.amount}
               date={new Date(transaction.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             />
