@@ -59,11 +59,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (!isMounted) return;
         setUser(session?.user ?? null);
         if (session?.user) {
-          if (event === 'SIGNED_IN' && session?.access_token) {
+          if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') && session?.access_token) {
             try { localStorage.setItem('actual-token', session.access_token); } catch {}
           }
           await fetchProfile(session.user.id);
         } else {
+          try { if (event === 'SIGNED_OUT') localStorage.removeItem('actual-token'); } catch {}
           setProfile(null);
         }
       });

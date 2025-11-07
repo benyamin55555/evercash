@@ -106,6 +106,10 @@ export class SupabaseAPI {
       headers,
     });
 
+    if (response.status === 401) {
+      try { localStorage.removeItem('actual-token'); } catch {}
+    }
+
     if (!response.ok) {
       const errorText = await response.text();
       let errorData;
