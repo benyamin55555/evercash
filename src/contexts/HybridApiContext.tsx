@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback, useRef } from 'react';
 import { initHybridAPI, type HybridAPI } from '@/lib/hybrid-api';
+import { isDemoOverlayEnabled, createDemoOverlayAPI } from '@/lib/demo-overlay';
 import { toast } from 'sonner';
 
 interface ApiContextType {
@@ -46,24 +47,40 @@ export function ApiProvider({ children }: { children: ReactNode }) {
         let apiInstance = apiRef.current;
         if (!apiInstance) {
           apiInstance = await initHybridAPI(baseUrl);
+          // If demo overlay is enabled, wrap the base API immediately
+          if (isDemoOverlayEnabled()) {
+            apiInstance = createDemoOverlayAPI(apiInstance);
+          }
           setApi(apiInstance);
           apiRef.current = apiInstance;
+        } else {
+          // On re-init, re-wrap based on current overlay flag
+          const wrapped = isDemoOverlayEnabled() ? createDemoOverlayAPI(apiInstance) : apiInstance;
+          setApi(wrapped);
+          apiRef.current = wrapped;
         }
 
-        // Authenticate only if a real JWT exists AND an authenticated call succeeds
-        try {
-          const token = localStorage.getItem('actual-token');
-          const isJwt = !!token && /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/.test(token);
-          if (isJwt && !isAuthRef.current) {
-            await apiInstance.getAccounts();
-            setIsAuthenticated(true);
-            isAuthRef.current = true;
-            if (DEBUG) console.log('✅ Authenticated with hybrid API using JWT');
+        // If demo overlay is active, treat as authenticated (overlay doesn't need backend auth)
+        if (isDemoOverlayEnabled()) {
+          setIsAuthenticated(true);
+          isAuthRef.current = true;
+          if (DEBUG) console.log('✅ Demo overlay active: forcing authenticated UI');
+        } else {
+          // Authenticate only if a real JWT exists AND an authenticated call succeeds
+          try {
+            const token = localStorage.getItem('actual-token');
+            const isJwt = !!token && /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/.test(token);
+            if (isJwt && !isAuthRef.current) {
+              await apiInstance.getAccounts();
+              setIsAuthenticated(true);
+              isAuthRef.current = true;
+              if (DEBUG) console.log('✅ Authenticated with hybrid API using JWT');
+            }
+          } catch (err) {
+            if (DEBUG) console.warn('❌ Authentication check failed, user needs to login', err);
+            setIsAuthenticated(false);
+            isAuthRef.current = false;
           }
-        } catch (err) {
-          if (DEBUG) console.warn('❌ Authentication check failed, user needs to login', err);
-          setIsAuthenticated(false);
-          isAuthRef.current = false;
         }
       } catch (err) {
         console.error('💥 Failed to initialize Hybrid API:', err);

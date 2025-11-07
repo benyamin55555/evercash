@@ -30,6 +30,9 @@ import Landing from "./pages/Landing";
 import Logout from "./pages/Logout";
 import { Loader2 } from "lucide-react";
 import { trackPageView } from "@/lib/analytics";
+import { DemoBanner } from "@/components/DemoBanner";
+import { seedDemoData, clearDemoData } from "@/lib/seed-demo";
+import { isDemoOverlayEnabled, setDemoOverlayEnabled } from "@/lib/demo-overlay";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +41,9 @@ function AuthenticatedApp() {
   const { api, loading, isAuthenticated, retryConnection } = useApi();
   const { user, profile, loading: authLoading } = useAuth();
   const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('actual-token');
+  const [demoMode, setDemoMode] = useState(false);
+  const [demoStats, setDemoStats] = useState<{ netWorth: number; txCount: number } | null>(null);
+  const [seedingDemo, setSeedingDemo] = useState(false);
 
   // When token appears (after Google sign-in), ensure API session re-initializes
   useEffect(() => {
@@ -47,6 +53,86 @@ function AuthenticatedApp() {
   }, [hasToken, isAuthenticated, loading, retryConnection]);
 
   // Removed onboarding Q&A popup; start tutorial instead from UI
+
+  // Auto-seed demo data for brand new users (no transactions yet)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!api || !isAuthenticated) return;
+      // If overlay demo is enabled, don't seed; just mark banner on
+      if (isDemoOverlayEnabled()) {
+        try {
+          const [accounts, transactions] = await Promise.all([
+            api.getAccounts(),
+            api.getTransactions(),
+          ]);
+          const netWorth = (accounts || []).reduce((s: number, a: any) => s + (a.balance || 0), 0);
+          if (!cancelled) {
+            setDemoMode(true);
+            setDemoStats({ netWorth, txCount: transactions.length });
+          }
+        } catch {}
+        return;
+      }
+      if (localStorage.getItem('evercash_demo_exited') === 'true') {
+        setDemoMode(false);
+        return;
+      }
+      try {
+        // Detect if already demo-seeded (presence of DEMO notes or Demo accounts)
+        const [accounts, transactions] = await Promise.all([
+          api.getAccounts(),
+          api.getTransactions(),
+        ]);
+        const hasDemoTx = (transactions || []).some(t => (t.notes || '').toString().startsWith('DEMO'));
+        const hasDemoAcc = (accounts || []).some(a => (a.name || '').toString().startsWith('Demo '));
+        if (hasDemoTx || hasDemoAcc) {
+          const netWorth = (accounts || []).reduce((s: number, a: any) => s + (a.balance || 0), 0);
+          if (!cancelled) {
+            setDemoMode(true);
+            setDemoStats({ netWorth, txCount: transactions.length });
+          }
+          return;
+        }
+        // If completely empty (no transactions), seed once
+        if ((transactions?.length || 0) === 0 && !seedingDemo) {
+          setSeedingDemo(true);
+          const stats = await seedDemoData(api);
+          if (!cancelled) {
+            setDemoMode(true);
+            setDemoStats(stats);
+          }
+          setSeedingDemo(false);
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [api, isAuthenticated]);
+
+  const exitDemo = async () => {
+    if (!api) return;
+    setSeedingDemo(true);
+    try {
+      // If overlay is on, just disable and reload
+      if (isDemoOverlayEnabled()) {
+        setDemoOverlayEnabled(false);
+        try { localStorage.setItem('evercash_demo_exited', 'true'); } catch {}
+        setDemoMode(false);
+        setDemoStats(null);
+      } else {
+        await clearDemoData(api);
+        localStorage.setItem('evercash_demo_exited', 'true');
+        setDemoMode(false);
+        setDemoStats(null);
+      }
+      try { await api.getAccounts(); await api.getTransactions(); } catch {}
+      window.location.reload();
+    } finally {
+      setSeedingDemo(false);
+    }
+  };
 
   // Show loading state (only while API initializes)
   if (loading) {
@@ -92,7 +178,7 @@ function AuthenticatedApp() {
   }
 
   // If no server token, show landing page (treat as logged out)
-  if (!hasToken) {
+  if (!hasToken && !isDemoOverlayEnabled()) {
     return <Landing />;
   }
 
@@ -129,6 +215,14 @@ function AuthenticatedApp() {
   return (
     <BrowserRouter>
       <SidebarProvider>
+        {/* Demo banner on top when demo mode is active */}
+        {demoMode && (
+          <DemoBanner
+            netWorth={demoStats?.netWorth}
+            txCount={demoStats?.txCount}
+            onExit={exitDemo}
+          />
+        )}
         <div className="flex min-h-screen w-full">
           <AppSidebar className="hidden md:flex" />
           

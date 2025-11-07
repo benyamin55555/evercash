@@ -17,6 +17,7 @@ import '@/lib/console-test'; // Makes window.testAI() available
 import { toast } from "sonner";
 import { ImportHistory, createImportRecord } from "@/components/ImportHistory";
 import { SavedFiles } from "@/components/SavedFiles";
+import { isDemoOverlayEnabled, setDemoOverlayEnabled } from "@/lib/demo-overlay";
 
 interface ImportStats {
   totalTransactions: number;
@@ -120,6 +121,18 @@ export default function Import() {
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (!file) return;
+
+    // Block uploads in demo mode
+    if (isDemoOverlayEnabled()) {
+      toast.info('Demo mode: uploads are disabled.', {
+        action: {
+          label: 'Exit demo',
+          onClick: () => { try { setDemoOverlayEnabled(false); } catch {} window.location.reload(); }
+        },
+        duration: 3500,
+      });
+      return;
+    }
 
     // Validate file type (PDF, CSV, Images)
     const allowedTypes = [
@@ -295,6 +308,18 @@ export default function Import() {
   // Old import function removed - using addToSupabase instead
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (isDemoOverlayEnabled()) {
+      toast.info('Demo mode: uploads are disabled.', {
+        action: {
+          label: 'Exit demo',
+          onClick: () => { try { setDemoOverlayEnabled(false); } catch {} window.location.reload(); }
+        },
+        duration: 3500,
+      });
+      // Clear selection so user can try again later
+      try { (event.target as HTMLInputElement).value = ''; } catch {}
+      return;
+    }
     const files = event.target.files;
     if (files && files.length > 0) {
       onDrop([files[0]]);
@@ -640,13 +665,37 @@ export default function Import() {
             {/* Mobile: Stacked buttons */}
             <div className="md:hidden space-y-3">
               <Button asChild className="bg-gradient-emerald hover:opacity-90 w-full h-12 text-sm">
-                <label htmlFor="file-upload" className="cursor-pointer">
+                <label
+                  htmlFor="file-upload"
+                  className="cursor-pointer"
+                  onClick={(e) => {
+                    if (isDemoOverlayEnabled()) {
+                      e.preventDefault();
+                      toast.info('Demo mode: uploads are disabled.', {
+                        action: { label: 'Exit demo', onClick: () => { try { setDemoOverlayEnabled(false); } catch {} window.location.reload(); } },
+                        duration: 3500,
+                      });
+                    }
+                  }}
+                >
                   <Upload className="w-4 h-4 mr-2" />
                   Select Bank File
                 </label>
               </Button>
               <Button asChild variant="outline" className="w-full h-12 text-sm">
-                <label htmlFor="photo-upload" className="cursor-pointer">
+                <label
+                  htmlFor="photo-upload"
+                  className="cursor-pointer"
+                  onClick={(e) => {
+                    if (isDemoOverlayEnabled()) {
+                      e.preventDefault();
+                      toast.info('Demo mode: uploads are disabled.', {
+                        action: { label: 'Exit demo', onClick: () => { try { setDemoOverlayEnabled(false); } catch {} window.location.reload(); } },
+                        duration: 3500,
+                      });
+                    }
+                  }}
+                >
                   <ImageIcon className="w-4 h-4 mr-2" />
                   Select Photo
                 </label>
@@ -656,13 +705,37 @@ export default function Import() {
             {/* Desktop: Side by side buttons */}
             <div className="hidden md:flex gap-3 justify-center">
               <Button asChild className="bg-gradient-emerald hover:opacity-90 text-lg px-8 py-3">
-                <label htmlFor="file-upload" className="cursor-pointer">
+                <label
+                  htmlFor="file-upload"
+                  className="cursor-pointer"
+                  onClick={(e) => {
+                    if (isDemoOverlayEnabled()) {
+                      e.preventDefault();
+                      toast.info('Demo mode: uploads are disabled.', {
+                        action: { label: 'Exit demo', onClick: () => { try { setDemoOverlayEnabled(false); } catch {} window.location.reload(); } },
+                        duration: 3500,
+                      });
+                    }
+                  }}
+                >
                   <Upload className="w-5 h-5 mr-2" />
                   Select Bank File
                 </label>
               </Button>
               <Button asChild variant="outline" className="text-lg px-8 py-3">
-                <label htmlFor="photo-upload" className="cursor-pointer">
+                <label
+                  htmlFor="photo-upload"
+                  className="cursor-pointer"
+                  onClick={(e) => {
+                    if (isDemoOverlayEnabled()) {
+                      e.preventDefault();
+                      toast.info('Demo mode: uploads are disabled.', {
+                        action: { label: 'Exit demo', onClick: () => { try { setDemoOverlayEnabled(false); } catch {} window.location.reload(); } },
+                        duration: 3500,
+                      });
+                    }
+                  }}
+                >
                   <ImageIcon className="w-5 h-5 mr-2" />
                   Select Photo
                 </label>

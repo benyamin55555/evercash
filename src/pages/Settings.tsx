@@ -10,6 +10,8 @@ import { useApi } from "@/contexts/HybridApiContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { seedDemoData, clearDemoData } from "@/lib/seed-demo";
+import { isDemoOverlayEnabled, setDemoOverlayEnabled, resetDemoOverlayData } from "@/lib/demo-overlay";
 
 // Integration note: Use useSettings() to persist preferences
 // Store theme in localStorage or sync with user profile
@@ -22,11 +24,48 @@ export default function Settings() {
   const [nameInput, setNameInput] = useState(user?.name || '');
   const [comingSoonOpen, setComingSoonOpen] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
+  const [demoBusy, setDemoBusy] = useState(false);
+  const [isDemo, setIsDemo] = useState(false);
+  const [demoStats, setDemoStats] = useState<{ netWorth: number; txCount: number } | null>(null);
 
   // Update inputs when user changes
   useEffect(() => {
     setNameInput(user?.name || '');
   }, [user]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!api) return;
+      // Overlay takes precedence
+      if (isDemoOverlayEnabled()) {
+        try {
+          const [accs, tx] = await Promise.all([api.getAccounts(), api.getTransactions()]);
+          if (!cancelled) {
+            setIsDemo(true);
+            const netWorth = (accs || []).reduce((s: number, a: any) => s + (a.balance || 0), 0);
+            setDemoStats({ netWorth, txCount: tx.length });
+          }
+        } catch {}
+        return;
+      }
+      try {
+        const [accs, tx] = await Promise.all([api.getAccounts(), api.getTransactions()]);
+        const hasDemoTx = (tx || []).some(t => (t.notes || '').toString().startsWith('DEMO'));
+        const hasDemoAcc = (accs || []).some(a => (a.name || '').toString().startsWith('Demo '));
+        if (!cancelled) {
+          setIsDemo(hasDemoTx || hasDemoAcc);
+          if (hasDemoTx || hasDemoAcc) {
+            const netWorth = (accs || []).reduce((s: number, a: any) => s + (a.balance || 0), 0);
+            setDemoStats({ netWorth, txCount: tx.length });
+          } else {
+            setDemoStats(null);
+          }
+        }
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, [api]);
 
   const handleSaveProfile = () => {
     if (user) {
@@ -92,6 +131,44 @@ export default function Settings() {
       setIsPaying(false);
     }
   };
+  const handleEnterDemo = async () => {
+    if (demoBusy) return;
+    setDemoBusy(true);
+    try {
+      try { localStorage.removeItem('evercash_demo_exited'); } catch {}
+      // Always reset to the canonical demo dataset
+      resetDemoOverlayData();
+      setDemoOverlayEnabled(true);
+      // Fast reload to re-init API with overlay
+      window.location.reload();
+    } finally {
+      setDemoBusy(false);
+    }
+  };
+  const handleExitDemo = async () => {
+    if (demoBusy) return;
+    setDemoBusy(true);
+    try {
+      if (isDemoOverlayEnabled()) {
+        setDemoOverlayEnabled(false);
+        try { localStorage.setItem('evercash_demo_exited', 'true'); } catch {}
+        setIsDemo(false);
+        setDemoStats(null);
+        toast({ title: 'Demo mode disabled', description: 'Overlay turned off' });
+        window.location.reload();
+        return;
+      }
+      if (!api) return;
+      await clearDemoData(api);
+      try { localStorage.setItem('evercash_demo_exited', 'true'); } catch {}
+      setIsDemo(false);
+      setDemoStats(null);
+      toast({ title: 'Demo mode disabled', description: 'Demo data cleared' });
+      window.location.reload();
+    } finally {
+      setDemoBusy(false);
+    }
+  };
   return (
     <div className="p-8 space-y-8 animate-fade-in max-w-4xl">
       <div>
@@ -134,6 +211,31 @@ export default function Settings() {
         >
           Log out
         </Button>
+      </div>
+
+      <div className="glass-card p-8 rounded-2xl space-y-6 animate-fade-in-up">
+        <div className="flex items-center gap-3 mb-4">
+          <Sparkles className="w-6 h-6 text-accent" />
+          <h2 className="text-2xl font-bold">Demo Mode</h2>
+        </div>
+        <p className="text-sm text-muted-foreground">Preview exactly what a brand-new user sees. This seeds realistic data and shows a demo banner. You can exit anytime.</p>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button onClick={handleEnterDemo} disabled={demoBusy} className="sm:w-auto">
+            {demoBusy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+            Enter Demo Mode
+          </Button>
+          <Button variant="outline" onClick={handleExitDemo} disabled={demoBusy} className="sm:w-auto">
+            {demoBusy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+            Exit Demo Mode
+          </Button>
+        </div>
+        <div className="text-xs text-muted-foreground">
+          {isDemo && demoStats ? (
+            <span>Currently in demo mode • Net worth {demoStats.netWorth.toLocaleString()} • {demoStats.txCount} transactions</span>
+          ) : (
+            <span>Not in demo mode</span>
+          )}
+        </div>
       </div>
 
       <div className="glass-card p-8 rounded-2xl space-y-6 animate-fade-in-up">
