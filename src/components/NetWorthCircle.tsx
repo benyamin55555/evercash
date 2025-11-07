@@ -26,7 +26,7 @@ export function NetWorthCircle({ netWorth, target, surplusDeficit, editingTarget
   ];
 
   const COLORS = theme === 'dark' 
-    ? ["#22c55e", "rgba(255,255,255,0.06)"] 
+    ? ["#7BEF2D", "rgba(255,255,255,0.06)"] 
     : ["hsl(158 64% 20%)", "hsl(220 16% 22%)"];
 
   return (
@@ -59,7 +59,7 @@ export function NetWorthCircle({ netWorth, target, surplusDeficit, editingTarget
               onClick={() => setEditingTarget(true)}
               className={`text-4xl font-bold hover:scale-105 transition-transform cursor-pointer ${
                 theme === 'dark' 
-                  ? 'text-green-400 [text-shadow:_0_0_20px_rgba(34,197,94,0.6)]' 
+                  ? 'text-[#7BEF2D] [text-shadow:_0_0_20px_rgba(123,239,45,0.6)]' 
                   : 'text-green-700'
               }`}
               title="Click to edit target"
@@ -109,7 +109,7 @@ export function NetWorthCircle({ netWorth, target, surplusDeficit, editingTarget
             <p className="text-xs text-muted-foreground mb-1">Monthly Status</p>
             <div className={`flex items-center justify-center gap-2 ${
               surplusDeficit >= 0 
-                ? theme === 'dark' ? 'text-green-400' : 'text-green-600'
+                ? theme === 'dark' ? 'text-[#7BEF2D]' : 'text-green-600'
                 : 'text-red-600'
             }`}>
               <span className="text-lg font-semibold">

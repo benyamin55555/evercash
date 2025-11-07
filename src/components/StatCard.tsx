@@ -45,7 +45,7 @@ export function StatCard({ title, value, change, changeType, icon: Icon, contrib
                 key={idx}
                 className={`relative overflow-hidden rounded-lg px-3 py-2.5 border transition-all ${
                   theme === 'dark'
-                    ? 'bg-gradient-to-br from-green-500/10 to-green-400/5 border-green-500/20 hover:border-green-400/40 hover:shadow-[0_0_12px_rgba(34,197,94,0.15)]'
+                    ? 'bg-gradient-to-br from-[#7BEF2D]/10 to-[#7BEF2D]/5 border-[#7BEF2D]/20 hover:border-[#7BEF2D]/40 hover:shadow-[0_0_12px_rgba(123,239,45,0.15)]'
                     : 'bg-gradient-to-br from-emerald-500/8 to-emerald-400/5 border-emerald-500/20 hover:border-emerald-400/40 hover:shadow-[0_0_12px_rgba(16,185,129,0.12)]'
                 } ${onContributorClick ? 'cursor-pointer' : ''}`}
                 onClick={onContributorClick ? () => onContributorClick(c.name) : undefined}
@@ -53,12 +53,12 @@ export function StatCard({ title, value, change, changeType, icon: Icon, contrib
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 flex-1 min-w-0">
                     <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                      theme === 'dark' ? 'bg-green-400 shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'bg-emerald-600 shadow-[0_0_6px_rgba(16,185,129,0.5)]'
+                      theme === 'dark' ? 'bg-[#7BEF2D] shadow-[0_0_6px_rgba(123,239,45,0.6)]' : 'bg-emerald-600 shadow-[0_0_6px_rgba(16,185,129,0.5)]'
                     }`} />
                     <span className="text-xs sm:text-sm font-medium truncate">{c.name}</span>
                   </div>
                   <span className={`hidden md:inline text-xs sm:text-sm font-bold tabular-nums ${
-                    theme === 'dark' ? 'text-green-400' : 'text-emerald-600'
+                    theme === 'dark' ? 'text-[#7BEF2D]' : 'text-emerald-600'
                   }`}>{c.value}</span>
                 </div>
               </div>

@@ -233,7 +233,7 @@ export default function Budgets() {
           </Button>
           <Button 
             onClick={() => setCreateDialogOpen(true)}
-            className="bg-gradient-to-r from-green-500 to-green-400 hover:from-green-400 hover:to-green-300 text-black font-bold shadow-[0_0_15px_rgba(0,255,0,0.4)]"
+            className="bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold shadow-[0_0_10px_rgba(16,185,129,0.25)] dark:bg-gradient-to-r dark:from-[#7BEF2D] dark:to-[#7BEF2D] dark:hover:from-[#7BEF2D]/90 dark:hover:to-[#7BEF2D]/80 dark:text-black dark:shadow-[0_0_15px_rgba(123,239,45,0.4)]"
           >
             <Plus className="w-5 h-5 mr-2" />
             Add Category
@@ -255,7 +255,7 @@ export default function Budgets() {
           </div>
           <div className="rounded-xl p-4 bg-muted/40 dark:bg-white/5 border border-border/40 dark:border-white/10 shadow-sm">
             <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Total Income</p>
-            <p className="text-2xl font-bold text-green-500 dark:text-emerald-400">{formatAmount((budgetData?.totalIncome || 0))}</p>
+            <p className="text-2xl font-bold text-green-600 dark:text-[#7BEF2D]">{formatAmount((budgetData?.totalIncome || 0))}</p>
           </div>
           <div className="rounded-xl p-4 bg-muted/40 dark:bg-white/5 border border-border/40 dark:border-white/10 shadow-sm">
             <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">To Budget</p>
@@ -299,8 +299,8 @@ export default function Budgets() {
                   <div key={category.id} className="p-4 rounded-lg border border-border/50 hover:border-accent/30 transition-colors">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500/20 to-green-400/30 flex items-center justify-center shadow-[0_0_10px_rgba(0,255,0,0.2)]">
-                          <Icon className="w-5 h-5 text-green-400" />
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-400/30 dark:from-[#7BEF2D]/20 dark:to-[#7BEF2D]/30 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.2)] dark:shadow-[0_0_10px_rgba(123,239,45,0.2)]">
+                          <Icon className="w-5 h-5 text-emerald-600 dark:text-[#7BEF2D]" />
                         </div>
                         <div>
                           <h4 className="font-medium">{category.name}</h4>
@@ -310,7 +310,7 @@ export default function Budgets() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`text-sm font-medium ${remaining >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        <span className={`text-sm font-medium ${remaining >= 0 ? 'text-emerald-600 dark:text-[#7BEF2D]' : 'text-red-400'}`}>
                           {remaining >= 0 ? 'Remaining' : 'Overspent'}: {formatAmount(Math.abs(remaining))}
                         </span>
                         {editingCategory === category.id ? (

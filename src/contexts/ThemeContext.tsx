@@ -33,15 +33,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       root.style.setProperty('--card-foreground', '120 100% 50%');
       root.style.setProperty('--primary', '0 0% 0%');
       root.style.setProperty('--primary-foreground', '120 100% 50%');
-      root.style.setProperty('--secondary', '120 100% 50%');
+      root.style.setProperty('--secondary', '96 86% 56%');
       root.style.setProperty('--secondary-foreground', '0 0% 0%');
       root.style.setProperty('--muted', '0 0% 15%');
       root.style.setProperty('--muted-foreground', '120 50% 70%');
-      root.style.setProperty('--accent', '120 100% 50%');
+      root.style.setProperty('--accent', '96 86% 56%');
       root.style.setProperty('--accent-foreground', '0 0% 0%');
-      root.style.setProperty('--border', '120 100% 50% / 0.3');
+      root.style.setProperty('--border', '96 86% 56% / 0.3');
       root.style.setProperty('--input', '0 0% 10%');
-      root.style.setProperty('--ring', '120 100% 50%');
+      root.style.setProperty('--ring', '96 86% 56%');
     } else {
       // Light emerald theme
       root.style.setProperty('--background', '40 25% 96%');

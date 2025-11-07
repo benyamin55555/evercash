@@ -158,7 +158,7 @@ export function DashboardSlides({ transactions, accounts }: DashboardSlidesProps
     };
   }, [transactions, accounts]);
  
-  const gaugeColor = theme === "dark" ? "#22C55E" : "#10B981";
+  const gaugeColor = theme === "dark" ? "#7BEF2D" : "#10B981";
   // Cash Runway gauge styling
   const runwayCapped = Math.max(0, Math.min(12, runwayMonths));
   const runwayAngle = (runwayCapped / 12) * 360;

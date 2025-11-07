@@ -17,31 +17,31 @@ All colors MUST be HSL.
     --popover-foreground: 0 0% 100%; /* White text */
     --primary: 0 0% 0%;
     --primary-foreground: 0 0% 100%; /* White text */
-    --secondary: 120 100% 50%;
+    --secondary: 96 86% 56%;
     --secondary-foreground: 0 0% 100%; /* White text */
     --muted: 0 0% 15%;
     --muted-foreground: 0 0% 85%; /* Light gray text */
-    --accent: 120 100% 50%;
+    --accent: 96 86% 56%;
     --accent-foreground: 0 0% 100%; /* White text */
     --destructive: 0 100% 50%;
     --destructive-foreground: 0 0% 100%; /* White text */
-    --border: 120 100% 50% / 0.3;
+    --border: 96 86% 56% / 0.3;
     --input: 0 0% 10%;
-    --ring: 120 100% 50%;
+    --ring: 96 86% 56%;
     --radius: 1rem;
     --glass-bg: 0 0% 8% / 0.8;
-    --glass-border: 120 100% 50% / 0.3;
-    --gradient-emerald: linear-gradient(135deg, hsl(120 100% 50%), hsl(120 100% 40%));
-    --gradient-emerald-subtle: linear-gradient(135deg, hsl(120 100% 50% / 0.1), hsl(120 100% 40% / 0.15));
-    --glow-emerald: 0 0 30px hsl(120 100% 50% / 0.5);
+    --glass-border: 96 86% 56% / 0.3;
+    --gradient-emerald: linear-gradient(135deg, hsl(96 86% 56%), hsl(96 86% 40%));
+    --gradient-emerald-subtle: linear-gradient(135deg, hsl(96 86% 56% / 0.1), hsl(96 86% 40% / 0.15));
+    --glow-emerald: 0 0 30px hsl(96 86% 56% / 0.5);
     --sidebar-background: 0 0% 5%;
     --sidebar-foreground: 0 0% 100%; /* White text */
-    --sidebar-primary: 120 100% 50%;
+    --sidebar-primary: 96 86% 56%;
     --sidebar-primary-foreground: 0 0% 100%; /* White text */
     --sidebar-accent: 0 0% 10%;
     --sidebar-accent-foreground: 0 0% 100%; /* White text */
-    --sidebar-border: 120 100% 50% / 0.3;
-    --sidebar-ring: 120 100% 50%;
+    --sidebar-border: 96 86% 56% / 0.3;
+    --sidebar-ring: 96 86% 56%;
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
@@ -82,6 +82,37 @@ All colors MUST be HSL.
   }
 }
 
+/* Dark theme green overrides to #7BEF2D */
+@layer utilities {
+  [data-theme="dark"] .text-green-400,
+  [data-theme="dark"] .text-green-500,
+  [data-theme="dark"] .text-green-600,
+  [data-theme="dark"] .text-emerald-400,
+  [data-theme="dark"] .text-emerald-500,
+  [data-theme="dark"] .text-emerald-600 { color: #7BEF2D !important; }
+
+  [data-theme="dark"] .bg-green-500,
+  [data-theme="dark"] .bg-green-600 { background-color: #7BEF2D !important; }
+
+  [data-theme="dark"] .bg-green-500\/10 { background-color: rgba(123,239,45,0.10) !important; }
+  [data-theme="dark"] .bg-green-500\/20 { background-color: rgba(123,239,45,0.20) !important; }
+  [data-theme="dark"] .bg-green-900\/30 { background-color: rgba(123,239,45,0.18) !important; }
+
+  [data-theme="dark"] .border-green-500,
+  [data-theme="dark"] .border-green-600 { border-color: #7BEF2D !important; }
+
+  [data-theme="dark"] .ring-green-500 { --tw-ring-color: #7BEF2D !important; }
+
+  [data-theme="dark"] .from-green-500 { 
+    --tw-gradient-from: #7BEF2D var(--tw-gradient-from-position);
+    --tw-gradient-to: rgb(123 239 45 / 0) var(--tw-gradient-to-position);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+  [data-theme="dark"] .to-green-400 { --tw-gradient-to: #7BEF2D var(--tw-gradient-to-position); }
+  [data-theme="dark"] .from-green-500\/10 { --tw-gradient-from: rgba(123,239,45,0.10) var(--tw-gradient-from-position); }
+  [data-theme="dark"] .to-green-400\/20 { --tw-gradient-to: rgba(123,239,45,0.20) var(--tw-gradient-to-position); }
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -97,7 +128,7 @@ All colors MUST be HSL.
   }
   
   .glass-card-hover {
-    @apply glass-card hover:bg-card/60 hover:border-accent/50 hover:shadow-[0_0_30px_rgba(0,255,0,0.4)] transition-all duration-300;
+    @apply glass-card hover:bg-card/60 hover:border-accent/50 hover:shadow-[0_0_30px_rgba(123,239,45,0.4)] transition-all duration-300;
   }
   
   /* Dark theme text overrides - ensure ALL text is white */

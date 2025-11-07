@@ -134,14 +134,14 @@ export function MobileNavDrawer({ isOpen, onClose }: MobileNavProps) {
 
         {/* User info at bottom */}
         <div className="absolute bottom-0 left-0 right-0 p-4">
-          <div className="bg-gradient-to-br from-green-500/10 to-green-400/20 border border-green-500/30 p-4 rounded-xl shadow-[0_0_15px_rgba(0,255,0,0.2)]">
+          <div className="bg-gradient-to-br from-[#7BEF2D]/10 to-[#7BEF2D]/20 border border-[#7BEF2D]/30 p-4 rounded-xl shadow-[0_0_15px_rgba(123,239,45,0.2)]">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-green-400 flex items-center justify-center shadow-[0_0_10px_rgba(0,255,0,0.4)]">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#7BEF2D] to-[#7BEF2D] flex items-center justify-center shadow-[0_0_10px_rgba(123,239,45,0.4)]">
                 <span className="text-sm font-bold text-black">{userInitials}</span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm truncate text-emerald-600 dark:text-white">{userName}</p>
-                <p className="text-xs text-green-400 font-medium">Premium</p>
+                <p className="text-xs text-[#7BEF2D] font-medium">Premium</p>
               </div>
             </div>
           </div>

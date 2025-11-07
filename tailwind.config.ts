@@ -106,8 +106,8 @@ export default {
         "shimmer": "shimmer 3s ease-in-out infinite",
       },
       backgroundImage: {
-        'gradient-emerald': 'linear-gradient(135deg, hsl(158 64% 20%), hsl(158 50% 25%))',
-        'gradient-emerald-subtle': 'linear-gradient(135deg, hsl(158 64% 20% / 0.1), hsl(158 50% 25% / 0.2))',
+        'gradient-emerald': 'var(--gradient-emerald)',
+        'gradient-emerald-subtle': 'var(--gradient-emerald-subtle)',
       },
     },
   },
