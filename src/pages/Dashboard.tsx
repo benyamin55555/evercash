@@ -64,6 +64,27 @@ export default function Dashboard() {
   
   const [surplusDeficit, setSurplusDeficit] = useState(0);
   const { user } = useUser();
+  
+  const getPayeeName = useMemo(() => {
+    const map = new Map<string, string>();
+    payees.forEach(p => map.set(p.id, p.name));
+    return (id: string) => {
+      if (!id) return 'Unknown';
+      return map.get(id) || id;
+    };
+  }, [payees]);
+
+  const getCategoryName = useMemo(() => {
+    const map = new Map<string, string>();
+    categories.forEach(c => {
+      map.set(c.id, c.name);
+      map.set(c.name, c.name);
+    });
+    return (key: string) => {
+      if (!key) return 'other';
+      return map.get(key) || key;
+    };
+  }, [categories]);
 
   const fetchedRef = useRef(false);
   useEffect(() => {
@@ -204,26 +225,7 @@ export default function Dashboard() {
     .filter((a: any) => !a.closed)
     .reduce((sum: number, a: any) => sum + (a.balance ?? 0), 0)) || 0;
 
-  const getPayeeName = useMemo(() => {
-    const map = new Map<string, string>();
-    payees.forEach(p => map.set(p.id, p.name));
-    return (id: string) => {
-      if (!id) return 'Unknown';
-      return map.get(id) || id;
-    };
-  }, [payees]);
-
-  const getCategoryName = useMemo(() => {
-    const map = new Map<string, string>();
-    categories.forEach(c => {
-      map.set(c.id, c.name);
-      map.set(c.name, c.name);
-    });
-    return (key: string) => {
-      if (!key) return 'other';
-      return map.get(key) || key;
-    };
-  }, [categories]);
+  
 
   // Get the 5 most recent transactions
   const recentTransactions = [...transactions]
