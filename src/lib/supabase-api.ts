@@ -434,6 +434,11 @@ export class SupabaseAPI {
     return { imported: response.imported };
   }
 
+  async getImportCredits(): Promise<{ is_premium: boolean; import_credits_total: number; import_credits_used: number; }> {
+    const data = await this.request('/user/credits');
+    return data as { is_premium: boolean; import_credits_total: number; import_credits_used: number; };
+  }
+
   async createRazorpayOrder(amount: number, currency: string = 'INR', notes?: any): Promise<{ order_id: string; amount: number; currency: string; key_id: string; }> {
     let country = '';
     try {

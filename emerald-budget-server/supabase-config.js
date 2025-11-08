@@ -183,6 +183,59 @@ class SupabaseDB {
   }
 
   // User operations
+  async getImportCredits(userId) {
+    // Fetch user row and ensure default credit fields exist
+    const { data, error } = await this.client
+      .from('users')
+      .select('id, email, is_premium, import_credits_total, import_credits_used')
+      .eq('id', userId)
+      .single();
+    if (error && error.code !== 'PGRST116') throw error;
+    const row = data || {};
+    const total = typeof row.import_credits_total === 'number' ? row.import_credits_total : 5;
+    const used = typeof row.import_credits_used === 'number' ? row.import_credits_used : 0;
+    const is_premium = !!row.is_premium;
+    // Backfill defaults if missing
+    if (!data || row.import_credits_total == null || row.import_credits_used == null) {
+      await this.client
+        .from('users')
+        .update({
+          import_credits_total: total,
+          import_credits_used: used,
+          is_premium
+        })
+        .eq('id', userId);
+    }
+    return { is_premium, import_credits_total: total, import_credits_used: used };
+  }
+
+  async setPremiumWithCredits(userId, totalCredits = 30) {
+    // Set premium and upgrade credits to provided total
+    const { error } = await this.client
+      .from('users')
+      .update({
+        is_premium: true,
+        import_credits_total: totalCredits,
+        updated_at: new Date()
+      })
+      .eq('id', userId);
+    if (error) throw error;
+  }
+
+  async incrementImportCreditsUsed(userId, inc = 1) {
+    // Fetch current, then update conservatively within bounds
+    const info = await this.getImportCredits(userId);
+    const total = Math.max(0, info.import_credits_total || 0);
+    const used = Math.max(0, info.import_credits_used || 0);
+    const next = Math.min(total, used + (inc || 0));
+    const { error } = await this.client
+      .from('users')
+      .update({ import_credits_used: next, updated_at: new Date() })
+      .eq('id', userId);
+    if (error) throw error;
+    return { total, used: next };
+  }
+
   async createUser(email, passwordHash) {
     const { data, error } = await this.client
       .from('users')

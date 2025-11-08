@@ -42,6 +42,7 @@ app.use(cors(securityConfig.cors));
 app.options(/.*/, cors(securityConfig.cors));
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
+
 });
 app.head('/health', (req, res) => {
   res.status(200).end();
@@ -174,6 +175,17 @@ const authenticateUser = async (req, res, next) => {
     return res.status(401).json({ status: 'error', reason: 'unauthorized', details: 'verification-error' });
   }
 };
+
+// Credits: get current import credits
+app.get('/user/credits', authenticateUser, async (req, res) => {
+  try {
+    const info = await req.db.getImportCredits(req.user.id);
+    res.json(info);
+  } catch (e) {
+    console.error('credits endpoint error:', e);
+    res.status(500).json({ status: 'error', message: 'Failed to fetch credits' });
+  }
+});
 
 app.get('/', (req, res) => {
   res.json({
@@ -598,6 +610,36 @@ app.post('/ai/nanonets/extract', authenticateUser, aiUpload.single('file'), asyn
       size: req.file.size,
       mimetype: req.file.mimetype
     });
+    // Determine if this upload should count against credits (PDF or image)
+    const isPdf = (req.file.mimetype && req.file.mimetype.includes('pdf')) || (req.file.originalname && req.file.originalname.toLowerCase().endsWith('.pdf'));
+    const isImage = (req.file.mimetype && req.file.mimetype.startsWith('image/')) || /\.(jpg|jpeg|png|webp|heic|heif)$/i.test(req.file.originalname || '');
+    const shouldCountCredit = !!(isPdf || isImage);
+
+    // Enforce credits before processing expensive AI calls
+    if (shouldCountCredit) {
+      try {
+        const info = await req.db.getImportCredits(req.user.id);
+        const total = Number(info?.import_credits_total || 0);
+        const used = Number(info?.import_credits_used || 0);
+        if (used >= total) {
+          return res.status(402).json({
+            status: 'error',
+            code: 'CREDITS_EXHAUSTED',
+            message: 'Import credits exhausted. Upgrade to Premium to get more credits.',
+            credits: { total, used, is_premium: !!info?.is_premium }
+          });
+        }
+      } catch (e) {
+        console.warn('⚠️ Credit check failed, proceeding cautiously:', e?.message || e);
+      }
+    }
+
+    // Helper to consume a credit on success
+    const consumeCredit = async () => {
+      if (!shouldCountCredit) return;
+      try { await req.db.incrementImportCreditsUsed(req.user.id, 1); } catch (e) { console.warn('⚠️ Failed to increment import credit:', e?.message || e); }
+    };
+
     const form = new FormData();
     const blob = new Blob([req.file.buffer], { type: req.file.mimetype || 'application/octet-stream' });
     form.append('file', blob, req.file.originalname || 'upload');
@@ -648,6 +690,7 @@ app.post('/ai/nanonets/extract', authenticateUser, aiUpload.single('file'), asyn
               const parsed = await pdfParse(Buffer.from(req.file.buffer));
               const content = parsed.text || '';
               if (content && content.trim().length) {
+                await consumeCredit();
                 return res.status(200).json({ content });
               }
             }
@@ -713,6 +756,7 @@ app.post('/ai/nanonets/extract', authenticateUser, aiUpload.single('file'), asyn
             if (!content) {
               return res.status(502).json({ status: 'error', message: 'PDF.co conversion returned no content' });
             }
+            await consumeCredit();
             return res.status(200).json({ content });
           } catch (fbErr) {
             console.error('❌ PDF.co fallback error:', fbErr);
@@ -722,20 +766,22 @@ app.post('/ai/nanonets/extract', authenticateUser, aiUpload.single('file'), asyn
       }
     }
     if (resp.ok) {
-    try {
-      const json = JSON.parse(text);
-      return res.status(200).json(json);
-    } catch {
-      return res.status(200).type('application/json').send(text);
+      try {
+        const json = JSON.parse(text);
+        await consumeCredit();
+        return res.status(200).json(json);
+      } catch {
+        await consumeCredit();
+        return res.status(200).type('application/json').send(text);
+      }
+    } else {
+      return res.status(502).json({
+        status: 'error',
+        message: 'Nanonets upstream error',
+        upstreamStatus: resp.status,
+        upstreamBody: text.slice(0, 1000)
+      });
     }
-  } else {
-    return res.status(502).json({
-      status: 'error',
-      message: 'Nanonets upstream error',
-      upstreamStatus: resp.status,
-      upstreamBody: text.slice(0, 1000)
-    });
-  }
   } catch (err) {
     console.error('Nanonets proxy error:', err);
     // Try local PDF fallback first on thrown errors
@@ -756,6 +802,7 @@ app.post('/ai/nanonets/extract', authenticateUser, aiUpload.single('file'), asyn
           const parsed = await pdfParse(Buffer.from(req.file.buffer));
           const content = parsed.text || '';
           if (content && content.trim().length) {
+            await consumeCredit();
             return res.status(200).json({ content });
           }
         } catch (lpErr) {
@@ -940,6 +987,8 @@ app.post('/payments/razorpay/verify', authenticateUser, async (req, res) => {
       return res.status(400).json({ status: 'error', message: 'Invalid signature' });
     }
     try { await req.db.markPaymentVerified(req.user.id, razorpay_order_id, razorpay_payment_id, razorpay_signature); } catch {}
+    // Mark user as premium and set total credits to 30 (keep used as-is)
+    try { await req.db.setPremiumWithCredits(req.user.id, 30); } catch (e) { console.warn('setPremiumWithCredits failed:', e?.message || e); }
     return res.json({ status: 'ok' });
   } catch (err) {
     console.error('Razorpay verify error:', err);

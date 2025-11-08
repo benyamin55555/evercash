@@ -36,6 +36,11 @@ export class HybridAPI {
     this.supabaseAPI = initSupabaseAPI(baseUrl);
   }
 
+  // User credits & premium status
+  async getImportCredits(): Promise<{ is_premium: boolean; import_credits_total: number; import_credits_used: number; }> {
+    return await this.supabaseAPI.getImportCredits();
+  }
+
   async initialize(): Promise<void> {
     try {
       // Initialize Actual Budget API for business logic (optional)

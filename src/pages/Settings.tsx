@@ -27,6 +27,10 @@ export default function Settings() {
   const [demoBusy, setDemoBusy] = useState(false);
   const [isDemo, setIsDemo] = useState(false);
   const [demoStats, setDemoStats] = useState<{ netWorth: number; txCount: number } | null>(null);
+  const [creditsTotal, setCreditsTotal] = useState<number | null>(null);
+  const [creditsUsed, setCreditsUsed] = useState<number | null>(null);
+  const [isPremiumPlan, setIsPremiumPlan] = useState(false);
+  const [creditsLoading, setCreditsLoading] = useState(false);
 
   // Update inputs when user changes
   useEffect(() => {
@@ -66,6 +70,36 @@ export default function Settings() {
     })();
     return () => { cancelled = true; };
   }, [api]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!api) return;
+      try {
+        setCreditsLoading(true);
+        const info = await api.getImportCredits();
+        if (!cancelled) {
+          setCreditsTotal(info.import_credits_total || 0);
+          setCreditsUsed(info.import_credits_used || 0);
+          setIsPremiumPlan(!!info.is_premium);
+        }
+      } catch {}
+      finally { if (!cancelled) setCreditsLoading(false); }
+    })();
+    return () => { cancelled = true; };
+  }, [api]);
+
+  const refreshCredits = async () => {
+    if (!api) return;
+    try {
+      setCreditsLoading(true);
+      const info = await api.getImportCredits();
+      setCreditsTotal(info.import_credits_total || 0);
+      setCreditsUsed(info.import_credits_used || 0);
+      setIsPremiumPlan(!!info.is_premium);
+    } catch {}
+    finally { setCreditsLoading(false); }
+  };
 
   const handleSaveProfile = () => {
     if (user) {
@@ -116,6 +150,7 @@ export default function Settings() {
               razorpay_signature: response.razorpay_signature,
             });
             toast({ title: 'Payment successful', description: 'Thanks for upgrading to Premium!' });
+            try { await refreshCredits(); } catch {}
           } catch (err) {
             toast({ title: 'Verification failed', description: 'Please contact support.', variant: 'destructive' as any });
           }
@@ -235,6 +270,29 @@ export default function Settings() {
           ) : (
             <span>Not in demo mode</span>
           )}
+        </div>
+      </div>
+
+      <div className="glass-card p-8 rounded-2xl space-y-6 animate-fade-in-up">
+        <div className="flex items-center gap-3 mb-4">
+          <Sparkles className="w-6 h-6 text-accent" />
+          <h2 className="text-2xl font-bold">Import Credits</h2>
+        </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-semibold">{isPremiumPlan ? 'Premium' : 'Free'}</p>
+            <p className="text-sm text-muted-foreground">
+              {creditsTotal == null || creditsUsed == null
+                ? '—'
+                : `Remaining: ${(creditsTotal - creditsUsed) < 0 ? 0 : (creditsTotal - creditsUsed)} of ${creditsTotal}`}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={refreshCredits} disabled={creditsLoading}>
+              {creditsLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              Refresh
+            </Button>
+          </div>
         </div>
       </div>
 

@@ -60,12 +60,30 @@ export default function Import() {
   const [catTotal, setCatTotal] = useState(0);
   const [catUpdated, setCatUpdated] = useState(0);
   const stopRef = useRef(false);
+  const [creditsTotal, setCreditsTotal] = useState<number | null>(null);
+  const [creditsUsed, setCreditsUsed] = useState<number | null>(null);
+  const [isPremium, setIsPremium] = useState(false);
 
   // Load accounts on component mount
   useEffect(() => {
     if (api) {
       loadAccounts();
     }
+  }, [api]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      if (!api) return;
+      try {
+        const info = await api.getImportCredits();
+        if (!mounted) return;
+        setCreditsTotal(info.import_credits_total || 0);
+        setCreditsUsed(info.import_credits_used || 0);
+        setIsPremium(!!info.is_premium);
+      } catch {}
+    })();
+    return () => { mounted = false; };
   }, [api]);
 
   // Rotate entertaining tips while processing
@@ -121,6 +139,24 @@ export default function Import() {
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (!file) return;
+
+    try {
+      const isPdf = file.type.toLowerCase().includes('pdf') || file.name.toLowerCase().endsWith('.pdf');
+      const isImage = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|heic|heif)$/i.test(file.name);
+      if ((isPdf || isImage) && api) {
+        const info = await api.getImportCredits();
+        setCreditsTotal(info.import_credits_total || 0);
+        setCreditsUsed(info.import_credits_used || 0);
+        setIsPremium(!!info.is_premium);
+        if ((info.import_credits_used || 0) >= (info.import_credits_total || 0)) {
+          toast.info('Import credits exhausted. Upgrade to Premium to get more credits.', {
+            action: { label: 'Upgrade', onClick: () => { window.location.href = '/settings'; } },
+            duration: 3500,
+          });
+          return;
+        }
+      }
+    } catch {}
 
     // Block uploads in demo mode
     if (isDemoOverlayEnabled()) {
@@ -238,6 +274,14 @@ export default function Import() {
       }
       
       setParsedTransactions(transactions);
+      try {
+        if (api) {
+          const info = await api.getImportCredits();
+          setCreditsTotal(info.import_credits_total || 0);
+          setCreditsUsed(info.import_credits_used || 0);
+          setIsPremium(!!info.is_premium);
+        }
+      } catch {}
 
       // Validate transactions
       const { valid, invalid } = nanonetsAPI.validateTransactions(transactions);
@@ -261,6 +305,13 @@ export default function Import() {
       
       // More specific error messages
       if (error instanceof Error) {
+        if (error.message.includes('402') || error.message.includes('CREDITS_EXHAUSTED')) {
+          toast.info('Import credits exhausted. Upgrade to Premium to get more credits.', {
+            action: { label: 'Upgrade', onClick: () => { window.location.href = '/settings'; } },
+            duration: 4000,
+          });
+          return;
+        }
         if (error.message.includes('401') || error.message.includes('403')) {
           toast.error('🔐 API Authentication failed. Please check your Nanonets API key.');
         } else if (error.message.includes('413') || error.message.includes('too large')) {
@@ -279,7 +330,7 @@ export default function Import() {
       setProcessingTotalParts(null);
       setProcessingCurrentPart(0);
     }
-  }, []);
+  }, [api]);
 
   const calculateImportStats = (transactions: ParsedTransaction[]): ImportStats => {
     const stats: ImportStats = {
