@@ -19,7 +19,7 @@ import type { Account as ApiAccount, Transaction as ApiTransaction, Category, Pa
 import { useNavigate } from "react-router-dom";
 import { CurrencySelector } from "@/components/CurrencySelector";
 import { MobileNavButton } from "@/components/MobileNav";
-import { TutorialTour } from "@/components/TutorialTour";
+import { isDemoOverlayEnabled, setDemoOverlayEnabled, resetDemoOverlayData } from "@/lib/demo-overlay";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface BudgetData {
@@ -276,7 +276,22 @@ export default function Dashboard() {
             className="brand-evercash font-extrabold tracking-tight text-xl sm:text-2xl flex-shrink-0"
           >EVERCASH</h1>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <TutorialTour />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const on = isDemoOverlayEnabled();
+                if (on) {
+                  setDemoOverlayEnabled(false);
+                  try { localStorage.setItem('evercash_demo_exited', 'true'); } catch {}
+                } else {
+                  try { localStorage.removeItem('evercash_demo_exited'); } catch {}
+                  resetDemoOverlayData();
+                  setDemoOverlayEnabled(true);
+                }
+                window.location.reload();
+              }}
+            >{isDemoOverlayEnabled() ? 'Exit Demo' : 'Demo Mode'}</Button>
             <Button
               onClick={() => navigate('/import')}
               data-tutorial="import-button"
@@ -306,7 +321,22 @@ export default function Dashboard() {
               onChange={setCurrency}
               showIcon={true}
             />
-            <TutorialTour />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const on = isDemoOverlayEnabled();
+                if (on) {
+                  setDemoOverlayEnabled(false);
+                  try { localStorage.setItem('evercash_demo_exited', 'true'); } catch {}
+                } else {
+                  try { localStorage.removeItem('evercash_demo_exited'); } catch {}
+                  resetDemoOverlayData();
+                  setDemoOverlayEnabled(true);
+                }
+                window.location.reload();
+              }}
+            >{isDemoOverlayEnabled() ? 'Exit Demo' : 'Demo Mode'}</Button>
             <Button
               onClick={() => navigate('/import')}
               data-tutorial="import-button"

@@ -32,8 +32,10 @@ import { Loader2 } from "lucide-react";
 import { trackPageView } from "@/lib/analytics";
 import { DemoBanner } from "@/components/DemoBanner";
 import { seedDemoData, clearDemoData } from "@/lib/seed-demo";
-import { isDemoOverlayEnabled, setDemoOverlayEnabled } from "@/lib/demo-overlay";
+import { isDemoOverlayEnabled, setDemoOverlayEnabled, resetDemoOverlayData } from "@/lib/demo-overlay";
 import { updateUserProfile } from "@/lib/supabase-client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +47,7 @@ function AuthenticatedApp() {
   const [demoMode, setDemoMode] = useState(false);
   const [demoStats, setDemoStats] = useState<{ netWorth: number; txCount: number } | null>(null);
   const [seedingDemo, setSeedingDemo] = useState(false);
+  const [showDemoPrompt, setShowDemoPrompt] = useState(false);
 
   // When token appears (after Google sign-in), ensure API session re-initializes
   useEffect(() => {
@@ -85,16 +88,14 @@ function AuthenticatedApp() {
     return () => { cancelled = true; };
   }, [api, isAuthenticated]);
 
-  // Sync demo overlay with server-side onboarding flag
+  // Sync demo overlay with server-side onboarding flag (prompt new users instead of auto-enabling)
   useEffect(() => {
     if (!user || profile == null) return;
     // Avoid racing with API initialization; re-run once loading flips to false
     if (loading) return;
     const enabled = isDemoOverlayEnabled();
     if (profile.onboarding_completed === false && !enabled) {
-      setDemoOverlayEnabled(true);
-      setDemoMode(true);
-      retryConnection();
+      setShowDemoPrompt(true);
     } else if (profile.onboarding_completed === true && enabled) {
       setDemoOverlayEnabled(false);
       setDemoMode(false);
@@ -213,6 +214,35 @@ function AuthenticatedApp() {
   // Show main app if authenticated
   return (
     <BrowserRouter>
+      {/* First-time demo prompt */}
+      <Dialog open={showDemoPrompt} onOpenChange={setShowDemoPrompt}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Try Demo Mode?</DialogTitle>
+            <DialogDescription>
+              New here? Load a ready-made demo budget to see Evercash in action. You can exit anytime.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button
+              variant="outline"
+              onClick={async () => {
+                // Don't show again
+                try { if (user) await updateUserProfile(user.id, { onboarding_completed: true }); } catch {}
+                setShowDemoPrompt(false);
+              }}
+            >Skip for now</Button>
+            <Button
+              onClick={() => {
+                try { localStorage.removeItem('evercash_demo_exited'); } catch {}
+                resetDemoOverlayData();
+                setDemoOverlayEnabled(true);
+                window.location.reload();
+              }}
+            >Enter Demo</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       <SidebarProvider>
         {/* Demo banner on top when demo mode is active */}
         {demoMode && (
