@@ -47,8 +47,8 @@ All colors MUST be HSL.
   
   /* Branding color: enforce correct text color without background fills */
   [data-theme="light"] .brand-evercash {
-    color: #7BEF2D !important;
-    -webkit-text-fill-color: #7BEF2D !important;
+    color: #10B981 !important;
+    -webkit-text-fill-color: #10B981 !important;
     background: transparent !important;
     background-image: none !important;
     background-clip: initial !important;
@@ -98,77 +98,77 @@ All colors MUST be HSL.
   }
 }
 
-/* Dark theme green overrides to #7BEF2D */
+/* Dark theme green overrides to #10B981 */
 @layer utilities {
   [data-theme="dark"] .text-green-400,
   [data-theme="dark"] .text-green-500,
   [data-theme="dark"] .text-green-600,
   [data-theme="dark"] .text-emerald-400,
   [data-theme="dark"] .text-emerald-500,
-  [data-theme="dark"] .text-emerald-600 { color: #7BEF2D !important; }
+  [data-theme="dark"] .text-emerald-600 { color: #10B981 !important; }
 
   [data-theme="dark"] .bg-green-500,
-  [data-theme="dark"] .bg-green-600 { background-color: #7BEF2D !important; }
+  [data-theme="dark"] .bg-green-600 { background-color: #10B981 !important; }
 
-  [data-theme="dark"] .bg-green-500\/10 { background-color: rgba(123,239,45,0.10) !important; }
-  [data-theme="dark"] .bg-green-500\/20 { background-color: rgba(123,239,45,0.20) !important; }
-  [data-theme="dark"] .bg-green-900\/30 { background-color: rgba(123,239,45,0.18) !important; }
+  [data-theme="dark"] .bg-green-500\/10 { background-color: rgba(16,185,129,0.10) !important; }
+  [data-theme="dark"] .bg-green-500\/20 { background-color: rgba(16,185,129,0.20) !important; }
+  [data-theme="dark"] .bg-green-900\/30 { background-color: rgba(16,185,129,0.18) !important; }
 
   [data-theme="dark"] .border-green-500,
-  [data-theme="dark"] .border-green-600 { border-color: #7BEF2D !important; }
+  [data-theme="dark"] .border-green-600 { border-color: #10B981 !important; }
 
-  [data-theme="dark"] .ring-green-500 { --tw-ring-color: #7BEF2D !important; }
+  [data-theme="dark"] .ring-green-500 { --tw-ring-color: #10B981 !important; }
 
   [data-theme="dark"] .from-green-500 { 
-    --tw-gradient-from: #7BEF2D var(--tw-gradient-from-position);
-    --tw-gradient-to: rgb(123 239 45 / 0) var(--tw-gradient-to-position);
+    --tw-gradient-from: #10B981 var(--tw-gradient-from-position);
+    --tw-gradient-to: rgb(16 185 129 / 0) var(--tw-gradient-to-position);
     --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
   }
-  [data-theme="dark"] .to-green-400 { --tw-gradient-to: #7BEF2D var(--tw-gradient-to-position); }
-  [data-theme="dark"] .from-green-500\/10 { --tw-gradient-from: rgba(123,239,45,0.10) var(--tw-gradient-from-position); }
-  [data-theme="dark"] .to-green-400\/20 { --tw-gradient-to: rgba(123,239,45,0.20) var(--tw-gradient-to-position); }
+  [data-theme="dark"] .to-green-400 { --tw-gradient-to: #10B981 var(--tw-gradient-to-position); }
+  [data-theme="dark"] .from-green-500\/10 { --tw-gradient-from: rgba(16,185,129,0.10) var(--tw-gradient-from-position); }
+  [data-theme="dark"] .to-green-400\/20 { --tw-gradient-to: rgba(16,185,129,0.20) var(--tw-gradient-to-position); }
 
-  /* Light theme emerald/green overrides to #7BEF2D */
+  /* Light theme emerald/green overrides to #10B981 */
   [data-theme="light"] .text-emerald-400,
   [data-theme="light"] .text-emerald-500,
   [data-theme="light"] .text-emerald-600,
   [data-theme="light"] .text-green-500,
-  [data-theme="light"] .text-green-600 { color: #7BEF2D !important; }
+  [data-theme="light"] .text-green-600 { color: #10B981 !important; }
 
   [data-theme="light"] .bg-emerald-500,
   [data-theme="light"] .bg-emerald-600,
   [data-theme="light"] .bg-green-500,
-  [data-theme="light"] .bg-green-600 { background-color: #7BEF2D !important; }
+  [data-theme="light"] .bg-green-600 { background-color: #10B981 !important; }
 
-  [data-theme="light"] .bg-emerald-500\/10 { background-color: rgba(123,239,45,0.10) !important; }
-  [data-theme="light"] .bg-emerald-500\/15 { background-color: rgba(123,239,45,0.15) !important; }
-  [data-theme="light"] .bg-green-500\/10 { background-color: rgba(123,239,45,0.10) !important; }
+  [data-theme="light"] .bg-emerald-500\/10 { background-color: rgba(16,185,129,0.10) !important; }
+  [data-theme="light"] .bg-emerald-500\/15 { background-color: rgba(16,185,129,0.15) !important; }
+  [data-theme="light"] .bg-green-500\/10 { background-color: rgba(16,185,129,0.10) !important; }
 
   [data-theme="light"] .border-emerald-500,
   [data-theme="light"] .border-emerald-600,
   [data-theme="light"] .border-green-500,
-  [data-theme="light"] .border-green-600 { border-color: #7BEF2D !important; }
+  [data-theme="light"] .border-green-600 { border-color: #10B981 !important; }
 
-  [data-theme="light"] .border-emerald-500\/20 { border-color: rgba(123,239,45,0.20) !important; }
-  [data-theme="light"] .border-emerald-500\/30 { border-color: rgba(123,239,45,0.30) !important; }
-  [data-theme="light"] .border-green-500\/20 { border-color: rgba(123,239,45,0.20) !important; }
+  [data-theme="light"] .border-emerald-500\/20 { border-color: rgba(16,185,129,0.20) !important; }
+  [data-theme="light"] .border-emerald-500\/30 { border-color: rgba(16,185,129,0.30) !important; }
+  [data-theme="light"] .border-green-500\/20 { border-color: rgba(16,185,129,0.20) !important; }
 
   [data-theme="light"] .ring-emerald-500,
-  [data-theme="light"] .ring-green-500 { --tw-ring-color: #7BEF2D !important; }
+  [data-theme="light"] .ring-green-500 { --tw-ring-color: #10B981 !important; }
 
   [data-theme="light"] .from-emerald-600 { 
-    --tw-gradient-from: #7BEF2D var(--tw-gradient-from-position);
-    --tw-gradient-to: rgb(123 239 45 / 0) var(--tw-gradient-to-position);
+    --tw-gradient-from: #10B981 var(--tw-gradient-from-position);
+    --tw-gradient-to: rgb(16 185 129 / 0) var(--tw-gradient-to-position);
     --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
   }
-  [data-theme="light"] .to-emerald-500 { --tw-gradient-to: #7BEF2D var(--tw-gradient-to-position); }
+  [data-theme="light"] .to-emerald-500 { --tw-gradient-to: #10B981 var(--tw-gradient-to-position); }
   [data-theme="light"] .from-emerald-500\/8 { 
-    --tw-gradient-from: rgba(123,239,45,0.08) var(--tw-gradient-from-position);
-    --tw-gradient-to: rgb(123 239 45 / 0) var(--tw-gradient-to-position);
+    --tw-gradient-from: rgba(16,185,129,0.08) var(--tw-gradient-from-position);
+    --tw-gradient-to: rgb(16 185 129 / 0) var(--tw-gradient-to-position);
     --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
   }
-  [data-theme="light"] .to-emerald-400\/5 { --tw-gradient-to: rgba(123,239,45,0.05) var(--tw-gradient-to-position); }
-  [data-theme="light"] .to-emerald-400\/20 { --tw-gradient-to: rgba(123,239,45,0.20) var(--tw-gradient-to-position); }
+  [data-theme="light"] .to-emerald-400\/5 { --tw-gradient-to: rgba(16,185,129,0.05) var(--tw-gradient-to-position); }
+  [data-theme="light"] .to-emerald-400\/20 { --tw-gradient-to: rgba(16,185,129,0.20) var(--tw-gradient-to-position); }
 }
 
 @layer base {
@@ -186,7 +186,7 @@ All colors MUST be HSL.
   }
   
   .glass-card-hover {
-    @apply glass-card hover:bg-card/60 hover:border-accent/50 hover:shadow-[0_0_30px_rgba(123,239,45,0.4)] transition-all duration-300;
+    @apply glass-card hover:bg-card/60 hover:border-accent/50 hover:shadow-[0_0_30px_rgba(16,185,129,0.4)] transition-all duration-300;
   }
   
   /* Dark theme text overrides - ensure ALL text is white */

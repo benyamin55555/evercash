@@ -158,11 +158,11 @@ export function DashboardSlides({ transactions, accounts }: DashboardSlidesProps
     };
   }, [transactions, accounts]);
  
-  const gaugeColor = "#7BEF2D";
+  const gaugeColor = "#10B981";
   // Cash Runway gauge styling
   const runwayCapped = Math.max(0, Math.min(12, runwayMonths));
   const runwayAngle = (runwayCapped / 12) * 360;
-  const runwayFill = runwayMonths < 2 ? '#ef4444' : runwayMonths < 6 ? '#f59e0b' : '#7BEF2D';
+  const runwayFill = runwayMonths < 2 ? '#ef4444' : runwayMonths < 6 ? '#f59e0b' : '#10B981';
   const track = theme === 'dark' ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.08)';
   const runwayLabel = runwayMonths >= 1 ? `${runwayMonths.toFixed(1)} mo` : `${Math.max(1, Math.round(runwayMonths * 30))} days`;
   const liquidBalance = (accounts || []).filter((a: any) => !a.closed).reduce((sum: number, a: any) => sum + (a.balance || 0), 0);
@@ -178,7 +178,7 @@ export function DashboardSlides({ transactions, accounts }: DashboardSlidesProps
         <div className="w-full flex-none snap-start snap-always bg-card dark:bg-black border border-border rounded-xl p-3 md:p-4">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-muted-foreground">MTD Pacing</h3>
-            <span className={`text-xs font-semibold ${projectedEom > (monthlyAvg3 || 0) ? "text-red-500" : "text-[#7BEF2D]"}`}>
+            <span className={`text-xs font-semibold ${projectedEom > (monthlyAvg3 || 0) ? "text-red-500" : "text-[#10B981]"}`}>
               {projectedEom > (monthlyAvg3 || 0) ? "Over pace" : "On/Under pace"}
             </span>
           </div>
@@ -287,7 +287,7 @@ export function DashboardSlides({ transactions, accounts }: DashboardSlidesProps
               </div>
               {/* Center label */}
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <div className={`font-bold ${runwayMonths < 2 ? 'text-red-500' : runwayMonths < 6 ? 'text-yellow-500' : 'text-[#7BEF2D]'} text-xl md:text-3xl`}>{runwayLabel}</div>
+                <div className={`font-bold ${runwayMonths < 2 ? 'text-red-500' : runwayMonths < 6 ? 'text-yellow-500' : 'text-[#10B981]'} text-xl md:text-3xl`}>{runwayLabel}</div>
                 <div className="text-[11px] md:text-xs text-muted-foreground">at current burn</div>
               </div>
             </div>
@@ -331,7 +331,7 @@ export function DashboardSlides({ transactions, accounts }: DashboardSlidesProps
           <span
             key={index}
             className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-              currentSlide === index ? 'bg-[#7BEF2D]/70 w-2 h-2' : 'bg-muted-foreground/40'
+              currentSlide === index ? 'bg-[#10B981]/70 w-2 h-2' : 'bg-muted-foreground/40'
             }`}
           />
         ))}

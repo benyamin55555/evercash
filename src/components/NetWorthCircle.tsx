@@ -26,15 +26,15 @@ export function NetWorthCircle({ netWorth, target, surplusDeficit, editingTarget
   ];
 
   const COLORS = theme === 'dark' 
-    ? ["#7BEF2D", "rgba(255,255,255,0.06)"] 
-    : ["#7BEF2D", "rgba(0,0,0,0.08)"];
+    ? ["#10B981", "rgba(255,255,255,0.06)"] 
+    : ["#10B981", "rgba(0,0,0,0.08)"];
 
   return (
     <div className="glass-card p-8 rounded-2xl animate-scale-in relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-emerald-subtle opacity-20"></div>
       <div className="relative">
         <h2 className="text-lg font-semibold mb-6 text-center">Net Worth</h2>
-        <div className={`relative ${theme === 'dark' ? 'drop-shadow-[0_0_30px_rgba(123,239,45,0.4)]' : ''}`}>
+        <div className={`relative ${theme === 'dark' ? 'drop-shadow-[0_0_30px_rgba(16,185,129,0.4)]' : ''}`}>
           <ResponsiveContainer width="100%" height={240}>
             <PieChart>
               <Pie
@@ -59,7 +59,7 @@ export function NetWorthCircle({ netWorth, target, surplusDeficit, editingTarget
               onClick={() => setEditingTarget(true)}
               className={`text-4xl font-bold hover:scale-105 transition-transform cursor-pointer ${
                 theme === 'dark' 
-                  ? 'text-[#7BEF2D] [text-shadow:_0_0_20px_rgba(123,239,45,0.6)]' 
+                  ? 'text-[#10B981] [text-shadow:_0_0_20px_rgba(16,185,129,0.6)]' 
                   : 'text-green-700'
               }`}
               title="Click to edit target"
@@ -109,7 +109,7 @@ export function NetWorthCircle({ netWorth, target, surplusDeficit, editingTarget
             <p className="text-xs text-muted-foreground mb-1">Monthly Status</p>
             <div className={`flex items-center justify-center gap-2 ${
               surplusDeficit >= 0 
-                ? theme === 'dark' ? 'text-[#7BEF2D]' : 'text-green-600'
+                ? theme === 'dark' ? 'text-[#10B981]' : 'text-green-600'
                 : 'text-red-600'
             }`}>
               <span className="text-lg font-semibold">

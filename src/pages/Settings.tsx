@@ -141,7 +141,7 @@ export default function Settings() {
           name: user?.name || authUser?.email || 'User',
           email: authUser?.email || '',
         },
-        theme: { color: '#7BEF2D' },
+        theme: { color: '#10B981' },
         handler: async (response: any) => {
           try {
             await api.verifyRazorpayPayment({

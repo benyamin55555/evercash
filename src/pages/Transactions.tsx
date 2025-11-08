@@ -590,17 +590,17 @@ export default function Transactions() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in-up">
         <div 
           className={`glass-card p-4 rounded-xl cursor-pointer transition-all hover:scale-105 ${
-            transactionFilter === 'income' ? 'ring-2 ring-[#7BEF2D] bg-green-50 dark:bg-[#7BEF2D]/10' : 'hover:bg-accent/5'
+            transactionFilter === 'income' ? 'ring-2 ring-[#10B981] bg-green-50 dark:bg-[#10B981]/10' : 'hover:bg-accent/5'
           }`}
           onClick={() => setTransactionFilter(transactionFilter === 'income' ? 'all' : 'income')}
         >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Income</p>
-              <p className="text-2xl font-bold text-green-600 dark:text-[#7BEF2D]">{incomeCount}</p>
+              <p className="text-2xl font-bold text-green-600 dark:text-[#10B981]">{incomeCount}</p>
             </div>
-            <div className="p-3 rounded-full bg-green-100 dark:bg-[#7BEF2D]/20">
-              <TrendingUp className="w-6 h-6 text-green-600 dark:text-[#7BEF2D]" />
+            <div className="p-3 rounded-full bg-green-100 dark:bg-[#10B981]/20">
+              <TrendingUp className="w-6 h-6 text-green-600 dark:text-[#10B981]" />
             </div>
           </div>
         </div>
@@ -783,7 +783,7 @@ export default function Transactions() {
             >Expense</button>
             <button
               type="button"
-              className={`px-3 py-1 rounded-full text-xs font-bold border transition-colors ${formData.type === 'income' ? 'bg-green-500 text-white border-green-500 dark:bg-[#7BEF2D] dark:text-black dark:border-[#7BEF2D]' : 'bg-transparent border-muted-foreground text-muted-foreground hover:bg-green-500/10 dark:hover:bg-[#7BEF2D]/10'}`}
+              className={`px-3 py-1 rounded-full text-xs font-bold border transition-colors ${formData.type === 'income' ? 'bg-green-500 text-white border-green-500 dark:bg-[#10B981] dark:text-black dark:border-[#10B981]' : 'bg-transparent border-muted-foreground text-muted-foreground hover:bg-green-500/10 dark:hover:bg-[#10B981]/10'}`}
               onClick={() => setFormData(f => ({ ...f, type: 'income' }))}
             >Income</button>
           </div>

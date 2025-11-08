@@ -282,8 +282,8 @@ export default function Dashboard() {
               data-tutorial="import-button"
               className={`font-semibold text-xs px-2 py-2 whitespace-nowrap flex-shrink-0 ${
                 theme === 'dark'
-                  ? 'bg-gradient-to-r from-[#7BEF2D] to-[#7BEF2D] hover:from-[#7BEF2D]/90 hover:to-[#7BEF2D]/80 !text-black shadow-[0_0_12px_rgba(123,239,45,0.35)]'
-                  : 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 !text-white shadow-[0_0_10px_rgba(123,239,45,0.25)]'
+                  ? 'bg-gradient-to-r from-[#10B981] to-[#10B981] hover:from-[#10B981]/90 hover:to-[#10B981]/80 !text-black shadow-[0_0_12px_rgba(16,185,129,0.35)]'
+                  : 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 !text-white shadow-[0_0_10px_rgba(16,185,129,0.25)]'
               }`}
             >
               <Upload className={`w-3 h-3 sm:w-4 sm:h-4 mr-1 ${theme === 'dark' ? '!text-black' : '!text-white'}`} />
@@ -312,8 +312,8 @@ export default function Dashboard() {
               data-tutorial="import-button"
               className={`font-semibold text-sm md:text-base px-3 md:px-4 py-2 ${
                 theme === 'dark'
-                  ? 'bg-gradient-to-r from-[#7BEF2D] to-[#7BEF2D] hover:from-[#7BEF2D]/90 hover:to-[#7BEF2D]/80 !text-black shadow-[0_0_12px_rgba(123,239,45,0.35)]'
-                  : 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 !text-white shadow-[0_0_10px_rgba(123,239,45,0.25)]'
+                  ? 'bg-gradient-to-r from-[#10B981] to-[#10B981] hover:from-[#10B981]/90 hover:to-[#10B981]/80 !text-black shadow-[0_0_12px_rgba(16,185,129,0.35)]'
+                  : 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 !text-white shadow-[0_0_10px_rgba(16,185,129,0.25)]'
               }`}
             >
               <Upload className={`w-4 h-4 md:w-5 md:h-5 mr-1 md:mr-2 ${theme === 'dark' ? '!text-black' : '!text-white'}`} />
@@ -501,12 +501,12 @@ export default function Dashboard() {
                 return (
                   <div key={goal.id || index} className={`glass-card p-4 rounded-xl border-accent/30 ${
                     theme === 'dark'
-                      ? 'bg-gradient-to-br from-[#7BEF2D]/10 to-[#7BEF2D]/20 shadow-[0_0_15px_rgba(123,239,45,0.2)]'
-                      : 'bg-gradient-to-br from-emerald-500/10 to-emerald-400/20 shadow-[0_0_15px_rgba(123,239,45,0.2)]'
+                      ? 'bg-gradient-to-br from-[#10B981]/10 to-[#10B981]/20 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
+                      : 'bg-gradient-to-br from-emerald-500/10 to-emerald-400/20 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
                   }`}>
                     <p className="text-sm text-muted-foreground mb-1">{goal.name || 'Unnamed Goal'}</p>
                     <div className="flex items-baseline gap-2 mb-2">
-                      <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-[#7BEF2D]' : 'text-emerald-600'}`}>
+                      <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-[#10B981]' : 'text-emerald-600'}`}>
                         {progress.toFixed(0)}%
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -516,8 +516,8 @@ export default function Dashboard() {
                     <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
                       <div className={`h-full transition-all duration-300 ${
                         theme === 'dark'
-                          ? 'bg-gradient-to-r from-[#7BEF2D] to-[#7BEF2D] shadow-[0_0_10px_rgba(123,239,45,0.5)]'
-                          : 'bg-gradient-to-r from-emerald-600 to-emerald-500 shadow-[0_0_10px_rgba(123,239,45,0.3)]'
+                          ? 'bg-gradient-to-r from-[#10B981] to-[#10B981] shadow-[0_0_10px_rgba(16,185,129,0.5)]'
+                          : 'bg-gradient-to-r from-emerald-600 to-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]'
                       }`} style={{ width: `${progress}%` }}></div>
                     </div>
                   </div>
@@ -586,8 +586,8 @@ export default function Dashboard() {
 
       <div className={`glass-card p-8 rounded-2xl animate-fade-in-up border-accent/30 ${
         theme === 'dark'
-          ? 'bg-gradient-to-br from-[#7BEF2D]/5 to-[#7BEF2D]/10 shadow-[0_0_20px_rgba(123,239,45,0.2)]'
-          : 'bg-gradient-to-br from-emerald-500/5 to-emerald-400/10 shadow-[0_0_15px_rgba(123,239,45,0.2)]'
+          ? 'bg-gradient-to-br from-[#10B981]/5 to-[#10B981]/10 shadow-[0_0_20px_rgba(16,185,129,0.2)]'
+          : 'bg-gradient-to-br from-emerald-500/5 to-emerald-400/10 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
       }`}>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold">Recent Transactions</h2>
