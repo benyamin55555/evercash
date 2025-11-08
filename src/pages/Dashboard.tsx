@@ -273,15 +273,7 @@ export default function Dashboard() {
         {/* Mobile: brand + controls (same row) */}
         <div className="md:hidden flex items-center justify-between">
           <h1 
-            className="font-extrabold tracking-tight text-xl sm:text-2xl flex-shrink-0"
-            style={theme === 'dark' ? {
-              color: 'white'
-            } : {
-              background: 'linear-gradient(to right, #059669, #34d399)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}
+            className="brand-evercash font-extrabold tracking-tight text-xl sm:text-2xl flex-shrink-0"
           >EVERCASH</h1>
           <div className="flex items-center gap-2 flex-shrink-0">
             <TutorialTour />
@@ -305,15 +297,7 @@ export default function Dashboard() {
         {/* Desktop: brand left, controls right */}
         <div className="hidden md:flex items-center justify-between">
           <h1 
-            className="text-3xl md:text-4xl font-extrabold tracking-tight"
-            style={theme === 'dark' ? {
-              color: 'white'
-            } : {
-              background: 'linear-gradient(to right, #059669, #34d399)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}
+            className="brand-evercash text-3xl md:text-4xl font-extrabold tracking-tight"
           >EVERCASH</h1>
           <div className="flex items-center gap-3">
             <ThemeToggle />

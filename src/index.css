@@ -44,6 +44,22 @@ All colors MUST be HSL.
     --sidebar-ring: 96 86% 56%;
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
+  
+  /* Branding color: enforce correct text color without background fills */
+  [data-theme="light"] .brand-evercash {
+    color: #7BEF2D !important;
+    -webkit-text-fill-color: #7BEF2D !important;
+    background: transparent !important;
+    background-image: none !important;
+    background-clip: initial !important;
+    -webkit-background-clip: initial !important;
+  }
+  [data-theme="dark"] .brand-evercash {
+    color: hsl(0 0% 100%) !important;
+    -webkit-text-fill-color: hsl(0 0% 100%) !important;
+    background: transparent !important;
+    background-image: none !important;
+  }
 
   /* Light theme (emerald) */
   [data-theme="light"] {
