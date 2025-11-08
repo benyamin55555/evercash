@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useApi } from "@/contexts/HybridApiContext";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,10 +17,13 @@ export function QuickAddTransaction({ onAdded }: { onAdded?: () => void }) {
   const [category, setCategory] = useState("");
   const [type, setType] = useState<'expense' | 'income'>('expense');
   const [loading, setLoading] = useState(false);
+  const submittingRef = useRef(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!api) return;
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setLoading(true);
     try {
       // Sanitize all inputs
@@ -32,6 +35,7 @@ export function QuickAddTransaction({ onAdded }: { onAdded?: () => void }) {
       if (!sanitizedMerchant || sanitizedAmount <= 0) {
         toast.error("Please enter valid merchant and amount");
         setLoading(false);
+        submittingRef.current = false;
         return;
       }
       
@@ -63,6 +67,7 @@ export function QuickAddTransaction({ onAdded }: { onAdded?: () => void }) {
       toast.error(`❌ Failed to add transaction: ${err instanceof Error ? err.message : 'An error occurred'}`);
     } finally {
       setLoading(false);
+      submittingRef.current = false;
     }
   };
 
@@ -122,9 +127,9 @@ export function QuickAddTransaction({ onAdded }: { onAdded?: () => void }) {
           </SelectContent>
         </Select>
       </div>
-      <Button type="submit" className="w-full bg-gradient-emerald hover:opacity-90">
-        <Plus className="w-4 h-4 mr-2" />
-        Add Transaction
+      <Button type="submit" disabled={loading} aria-busy={loading} className="w-full bg-gradient-emerald hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed">
+        {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
+        {loading ? 'Adding...' : 'Add Transaction'}
       </Button>
     </form>
   );
