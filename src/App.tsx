@@ -88,15 +88,19 @@ function AuthenticatedApp() {
   // Sync demo overlay with server-side onboarding flag
   useEffect(() => {
     if (!user || profile == null) return;
+    // Avoid racing with API initialization; re-run once loading flips to false
+    if (loading) return;
     const enabled = isDemoOverlayEnabled();
     if (profile.onboarding_completed === false && !enabled) {
       setDemoOverlayEnabled(true);
+      setDemoMode(true);
       retryConnection();
     } else if (profile.onboarding_completed === true && enabled) {
       setDemoOverlayEnabled(false);
+      setDemoMode(false);
       retryConnection();
     }
-  }, [user?.id, profile?.onboarding_completed, retryConnection]);
+  }, [user?.id, profile?.onboarding_completed, loading, retryConnection]);
 
   const exitDemo = async () => {
     if (!api) return;
@@ -116,8 +120,10 @@ function AuthenticatedApp() {
       }
       // Mark onboarding complete on first exit
       try { if (user) { await updateUserProfile(user.id, { onboarding_completed: true }); } } catch {}
-      try { await api.getAccounts(); await api.getTransactions(); } catch {}
-      window.location.reload();
+      // Re-init API to drop overlay wrapper immediately
+      try { await retryConnection(); } catch {}
+      // Force a full reload to guarantee non-demo data shows immediately
+      try { window.location.reload(); } catch { try { window.location.assign('/'); } catch {} }
     } finally {
       setSeedingDemo(false);
     }

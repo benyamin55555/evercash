@@ -28,6 +28,7 @@ export function ApiProvider({ children }: { children: ReactNode }) {
 
   const initializingRef = useRef(false);
   const initPromiseRef = useRef<Promise<void> | null>(null);
+  const lastOverlayRef = useRef<boolean>(isDemoOverlayEnabled());
 
   const initialize = useCallback(async () => {
     if (initializingRef.current) {
@@ -43,21 +44,20 @@ export function ApiProvider({ children }: { children: ReactNode }) {
           : (import.meta.env.VITE_API_BASE_URL || 'https://api.evercash.in');
         if (DEBUG) console.log('🔄 Initializing Hybrid API (Actual Budget + Supabase):', baseUrl);
 
-        // Avoid re-creating if already set
-        let apiInstance = apiRef.current;
-        if (!apiInstance) {
-          apiInstance = await initHybridAPI(baseUrl);
-          // If demo overlay is enabled, wrap the base API immediately
-          if (isDemoOverlayEnabled()) {
-            apiInstance = createDemoOverlayAPI(apiInstance);
-          }
+        const overlay = isDemoOverlayEnabled();
+        let apiInstance: HybridAPI | null = apiRef.current;
+        const mustRecreateBase = !apiInstance || overlay !== lastOverlayRef.current;
+        if (mustRecreateBase) {
+          // Always recreate the base API when overlay flag changes to avoid double-wrapping
+          let base = await initHybridAPI(baseUrl);
+          apiInstance = overlay ? createDemoOverlayAPI(base) : base;
+          lastOverlayRef.current = overlay;
           setApi(apiInstance);
           apiRef.current = apiInstance;
         } else {
-          // On re-init, re-wrap based on current overlay flag
-          const wrapped = isDemoOverlayEnabled() ? createDemoOverlayAPI(apiInstance) : apiInstance;
-          setApi(wrapped);
-          apiRef.current = wrapped;
+          // No overlay change; keep existing instance
+          setApi(apiInstance);
+          apiRef.current = apiInstance;
         }
 
         // If demo overlay is active, treat as authenticated (overlay doesn't need backend auth)
