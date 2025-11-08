@@ -9,7 +9,7 @@ try {
   if (!supabaseUrl || !supabaseAnonKey) {
     console.warn('Supabase is not configured (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY missing). Auth features are disabled.');
   } else {
-    supabase = createClient(supabaseUrl, supabaseAnonKey);
+    supabase = createClient(supabaseUrl, supabaseAnonKey, { auth: { persistSession: true, autoRefreshToken: true } });
   }
 } catch (e) {
   console.error('Failed to initialize Supabase client:', e);

@@ -1,4 +1,5 @@
 // Supabase-compatible API client for EVERCASH
+import { supabase } from '@/lib/supabase-client';
 export interface SupabaseAccount {
   id: string;
   name: string;
@@ -107,7 +108,26 @@ export class SupabaseAPI {
     });
 
     if (response.status === 401) {
-      try { localStorage.removeItem('actual-token'); } catch {}
+      // Try to silently refresh via Supabase and retry once
+      try {
+        if (supabase) {
+          const { data: { session } } = await supabase.auth.getSession();
+          const newToken = session?.access_token;
+          if (newToken) {
+            try { localStorage.setItem('actual-token', newToken); } catch {}
+            const retryHeaders: Record<string, string> = { ...headers, Authorization: `Bearer ${newToken}` };
+            const retryResp = await fetch(url, { ...options, headers: retryHeaders });
+            if (retryResp.ok) {
+              const retryText = await retryResp.text();
+              try { return JSON.parse(retryText); } catch { return retryText; }
+            }
+            const t = await retryResp.text();
+            let d; try { d = JSON.parse(t); } catch { d = { message: t }; }
+            throw new Error(`API Error (${retryResp.status}): ${JSON.stringify(d)}`);
+          }
+        }
+      } catch {}
+      // Fallthrough to normal error handling without clearing token
     }
 
     if (!response.ok) {
