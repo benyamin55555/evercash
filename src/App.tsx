@@ -33,6 +33,7 @@ import { trackPageView } from "@/lib/analytics";
 import { DemoBanner } from "@/components/DemoBanner";
 import { seedDemoData, clearDemoData } from "@/lib/seed-demo";
 import { isDemoOverlayEnabled, setDemoOverlayEnabled } from "@/lib/demo-overlay";
+import { updateUserProfile } from "@/lib/supabase-client";
 
 const queryClient = new QueryClient();
 
@@ -84,6 +85,19 @@ function AuthenticatedApp() {
     return () => { cancelled = true; };
   }, [api, isAuthenticated]);
 
+  // Sync demo overlay with server-side onboarding flag
+  useEffect(() => {
+    if (!user || profile == null) return;
+    const enabled = isDemoOverlayEnabled();
+    if (profile.onboarding_completed === false && !enabled) {
+      setDemoOverlayEnabled(true);
+      retryConnection();
+    } else if (profile.onboarding_completed === true && enabled) {
+      setDemoOverlayEnabled(false);
+      retryConnection();
+    }
+  }, [user?.id, profile?.onboarding_completed, retryConnection]);
+
   const exitDemo = async () => {
     if (!api) return;
     setSeedingDemo(true);
@@ -100,6 +114,8 @@ function AuthenticatedApp() {
         setDemoMode(false);
         setDemoStats(null);
       }
+      // Mark onboarding complete on first exit
+      try { if (user) { await updateUserProfile(user.id, { onboarding_completed: true }); } } catch {}
       try { await api.getAccounts(); await api.getTransactions(); } catch {}
       window.location.reload();
     } finally {
