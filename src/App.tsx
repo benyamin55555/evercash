@@ -151,6 +151,10 @@ function AuthenticatedApp() {
   }
 
   // If no server token, show landing page (treat as logged out)
+  const isAuthCallbackPath = typeof window !== 'undefined' && window.location.pathname.startsWith('/auth/callback');
+  if (isAuthCallbackPath) {
+    return <AuthCallback />;
+  }
   if (!hasToken && !isDemoOverlayEnabled()) {
     return <Landing />;
   }
