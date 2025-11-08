@@ -192,6 +192,22 @@ All colors MUST be HSL.
     }
   }
   
+  /* FORCE CATEGORY CHIP TEXT TO BE WHITE IN DARK THEME */
+  :root span.category-chip-dark {
+    color: hsl(0 0% 100%) !important;
+    background-color: hsl(0 0% 30%) !important;
+  }
+  
+  /* Override for category chips in dark theme - force white text */
+  :root span.dark\:text-white {
+    color: hsl(0 0% 100%) !important;
+  }
+  
+  /* More specific override for spans with dark:text-white class */
+  :root .dark\:text-white {
+    color: hsl(0 0% 100%) !important;
+  }
+  
   /* Light theme text overrides - make ALL text black */
   [data-theme="light"] {
     h1, h2, h3, h4, h5, h6,

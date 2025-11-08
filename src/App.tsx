@@ -54,12 +54,11 @@ function AuthenticatedApp() {
 
   // Removed onboarding Q&A popup; start tutorial instead from UI
 
-  // Auto-seed demo data for brand new users (no transactions yet)
+  // Demo banner visibility strictly follows overlay flag
   useEffect(() => {
     let cancelled = false;
     (async () => {
       if (!api || !isAuthenticated) return;
-      // If overlay demo is enabled, don't seed; just mark banner on
       if (isDemoOverlayEnabled()) {
         try {
           const [accounts, transactions] = await Promise.all([
@@ -71,41 +70,15 @@ function AuthenticatedApp() {
             setDemoMode(true);
             setDemoStats({ netWorth, txCount: transactions.length });
           }
-        } catch {}
-        return;
-      }
-      if (localStorage.getItem('evercash_demo_exited') === 'true') {
+        } catch {
+          if (!cancelled) {
+            setDemoMode(true);
+            setDemoStats(null);
+          }
+        }
+      } else {
         setDemoMode(false);
-        return;
-      }
-      try {
-        // Detect if already demo-seeded (presence of DEMO notes or Demo accounts)
-        const [accounts, transactions] = await Promise.all([
-          api.getAccounts(),
-          api.getTransactions(),
-        ]);
-        const hasDemoTx = (transactions || []).some(t => (t.notes || '').toString().startsWith('DEMO'));
-        const hasDemoAcc = (accounts || []).some(a => (a.name || '').toString().startsWith('Demo '));
-        if (hasDemoTx || hasDemoAcc) {
-          const netWorth = (accounts || []).reduce((s: number, a: any) => s + (a.balance || 0), 0);
-          if (!cancelled) {
-            setDemoMode(true);
-            setDemoStats({ netWorth, txCount: transactions.length });
-          }
-          return;
-        }
-        // If completely empty (no transactions), seed once
-        if ((transactions?.length || 0) === 0 && !seedingDemo) {
-          setSeedingDemo(true);
-          const stats = await seedDemoData(api);
-          if (!cancelled) {
-            setDemoMode(true);
-            setDemoStats(stats);
-          }
-          setSeedingDemo(false);
-        }
-      } catch {
-        // ignore
+        setDemoStats(null);
       }
     })();
     return () => { cancelled = true; };

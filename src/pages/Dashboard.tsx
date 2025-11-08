@@ -6,7 +6,6 @@ import { TransactionItem } from "@/components/TransactionItem";
 import { DashboardSlides } from "@/components/DashboardSlides";
 import { DashboardWidget } from "@/components/DashboardWidget";
 import { QuickAddTransaction } from "@/components/QuickAddTransaction";
-import { BankSyncModal } from "@/components/BankSyncModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useApi } from "@/contexts/HybridApiContext";
@@ -37,7 +36,6 @@ export default function Dashboard() {
   });
   const [editingTarget, setEditingTarget] = useState(false);
   const [targetInput, setTargetInput] = useState(netWorthTarget.toString());
-  const [bankSyncOpen, setBankSyncOpen] = useState(false);
   const { api, loading } = useApi();
   const DEBUG = (import.meta as any)?.env?.VITE_DEBUG_LOGS === 'true';
   const { theme } = useTheme();
@@ -576,7 +574,7 @@ export default function Dashboard() {
               variant="outline" 
               size="sm" 
               className="w-full mt-3"
-              onClick={() => setBankSyncOpen(true)}
+              onClick={() => toast.info('Bank sync is coming very soon for Premium users!')}
             >
               <Link2 className="w-4 h-4 mr-2" />
               Connect Banks
@@ -626,20 +624,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {bankSyncOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md w-full mx-4">
-            <h2 className="text-xl font-bold mb-4">Bank Sync (Debug Mode)</h2>
-            <p className="mb-4">This is a test modal to verify the functionality works.</p>
-            <Button onClick={() => setBankSyncOpen(false)}>Close</Button>
-          </div>
-        </div>
-      )}
       
-      <BankSyncModal 
-        open={bankSyncOpen} 
-        onOpenChange={setBankSyncOpen}
-      />
     </div>
   );
 }
