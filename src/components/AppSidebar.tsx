@@ -42,7 +42,7 @@ interface AppSidebarProps {
 }
 
 export function AppSidebar({ className }: AppSidebarProps) {
-  const { user: authUser } = useAuth();
+  const { user: authUser, profile } = useAuth();
   const { user } = useUser();
   
   // Get user initials
@@ -55,8 +55,8 @@ export function AppSidebar({ className }: AppSidebarProps) {
     return name.substring(0, 2).toUpperCase();
   };
   
-  // Priority: UserContext (Settings) → AuthContext → Email → Fallback
-  const userName = user?.name || authUser?.user_metadata?.full_name || authUser?.email?.split('@')[0] || 'User';
+  // Priority: DB profile full_name → Auth metadata full_name → UserContext name → Email username → Fallback
+  const userName = profile?.full_name || authUser?.user_metadata?.full_name || user?.name || authUser?.email?.split('@')[0] || 'User';
   const userInitials = getInitials(userName);
   
   return (
