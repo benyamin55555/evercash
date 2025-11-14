@@ -57,14 +57,34 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     if (supabase) {
       const sub = supabase.auth.onAuthStateChange(async (event, session) => {
         if (!isMounted) return;
+        
+        console.log('🔄 AuthContext: Auth state change:', {
+          event,
+          hasSession: !!session,
+          hasUser: !!session?.user,
+          hasAccessToken: !!session?.access_token,
+          tokenLength: session?.access_token?.length,
+          userEmail: session?.user?.email
+        });
+        
         setUser(session?.user ?? null);
         if (session?.user) {
           if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') && session?.access_token) {
-            try { localStorage.setItem('actual-token', session.access_token); } catch {}
+            try { 
+              localStorage.setItem('actual-token', session.access_token);
+              console.log('💾 AuthContext: Saved access token to localStorage for event:', event);
+            } catch (e) {
+              console.error('❌ AuthContext: Failed to save token:', e);
+            }
           }
           await fetchProfile(session.user.id);
         } else {
-          try { if (event === 'SIGNED_OUT') localStorage.removeItem('actual-token'); } catch {}
+          try { 
+            if (event === 'SIGNED_OUT') {
+              localStorage.removeItem('actual-token');
+              console.log('🗑️ AuthContext: Removed access token on sign out');
+            }
+          } catch {}
           setProfile(null);
         }
       });
@@ -75,9 +95,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     (async () => {
       try {
         if (supabase) {
+          console.log('🔄 AuthContext: Initial session check...');
           const { data: { session }, error } = await supabase.auth.getSession();
+          
+          console.log('📋 AuthContext: Initial session state:', {
+            hasSession: !!session,
+            hasUser: !!session?.user,
+            hasAccessToken: !!session?.access_token,
+            tokenLength: session?.access_token?.length,
+            userEmail: session?.user?.email,
+            error: error?.message
+          });
+          
           if (error) {
-            console.warn('Supabase getSession error:', error);
+            console.warn('❌ AuthContext: Supabase getSession error:', error);
           }
           if (!isMounted) return;
           setUser(session?.user ?? null);
@@ -86,13 +117,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             try {
               if (session?.access_token) {
                 localStorage.setItem('actual-token', session.access_token);
+                console.log('💾 AuthContext: Initial token saved to localStorage');
               }
-            } catch {}
+            } catch (e) {
+              console.error('❌ AuthContext: Failed to save initial token:', e);
+            }
             await fetchProfile(session.user.id);
           }
         }
       } catch (err) {
-        console.warn('Supabase getSession failed:', err);
+        console.error('❌ AuthContext: Supabase getSession failed:', err);
       } finally {
         clearTimeout(fallback);
         if (isMounted) setLoading(false);

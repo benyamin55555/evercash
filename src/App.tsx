@@ -34,6 +34,7 @@ import { DemoBanner } from "@/components/DemoBanner";
 import { seedDemoData, clearDemoData } from "@/lib/seed-demo";
 import { isDemoOverlayEnabled, setDemoOverlayEnabled, resetDemoOverlayData } from "@/lib/demo-overlay";
 import { updateUserProfile } from "@/lib/supabase-client";
+import { authManager } from "@/lib/auth-manager";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 

@@ -1,5 +1,6 @@
 // Supabase-compatible API client for EVERCASH
 import { supabase } from '@/lib/supabase-client';
+import { authManager } from '@/lib/auth-manager';
 export interface SupabaseAccount {
   id: string;
   name: string;
@@ -77,41 +78,65 @@ export class SupabaseAPI {
 
   private async request(endpoint: string, options: RequestInit = {}): Promise<any> {
     const url = `${this.baseUrl}${endpoint}`;
+    const requestId = Math.random().toString(36).substring(7);
+    
+    console.log(`🚀 [${requestId}] Starting request to: ${endpoint}`);
+    console.log(`📊 [${requestId}] Supabase client available:`, !!supabase);
     
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...((options.headers as Record<string, string>) || {}),
     };
 
-    // Ensure we have a fresh access token before making the request
+    // DEEP AUDIT: Use centralized auth manager for token management
     let token = null as string | null;
     let isJwt = false;
+    let tokenSource = 'none';
+    
     try {
-      token = localStorage.getItem('actual-token');
-      if (this.DEBUG) console.log('🔑 Token from localStorage:', token ? `${token.substring(0, 20)}...` : 'null');
-      isJwt = !!token && /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/.test(token!);
-      // If missing or malformed, ask Supabase for the current session token
-      if ((!token || !isJwt) && supabase) {
-        const { data: { session } } = await supabase.auth.getSession();
-        const newToken = session?.access_token || null;
-        if (newToken) {
-          try { localStorage.setItem('actual-token', newToken); } catch {}
-          token = newToken;
-          isJwt = true;
-          if (this.DEBUG) console.log('🔄 Fetched fresh token from Supabase session');
+      // Use AuthManager to ensure we have a fresh token
+      console.log(`🔄 [${requestId}] Ensuring fresh token via AuthManager...`);
+      token = await authManager.ensureFreshToken();
+      
+      if (token) {
+        isJwt = /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/.test(token);
+        console.log(`🔑 [${requestId}] Token from AuthManager:`, {
+          hasToken: !!token,
+          tokenLength: token.length,
+          isJwt,
+          tokenPreview: `${token.substring(0, 20)}...`
+        });
+        
+        if (isJwt) {
+          // Log token expiry info for debugging
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const exp = payload.exp * 1000;
+            const now = Date.now();
+            const timeToExpiry = exp - now;
+            console.log(`⏰ [${requestId}] Token expires at:`, new Date(exp).toISOString());
+            console.log(`⏰ [${requestId}] Time to expiry:`, `${Math.round(timeToExpiry / 1000 / 60)}min`);
+            tokenSource = 'auth-manager';
+          } catch (e) {
+            console.warn(`⚠️ [${requestId}] Failed to parse token expiry:`, e);
+          }
         }
+      } else {
+        console.warn(`⚠️ [${requestId}] AuthManager returned no token`);
       }
+      
     } catch (e) {
-      if (this.DEBUG) console.warn('⚠️ Failed to ensure fresh token before request:', e);
+      console.error(`❌ [${requestId}] AuthManager failed to provide token:`, e);
     }
 
+    // Step 3: Set Authorization header
     if (isJwt && token) {
       headers['Authorization'] = `Bearer ${token}`;
-      if (this.DEBUG) console.log('🔐 Authorization header set:', `Bearer ${token.substring(0, 20)}...`);
+      console.log(`🔐 [${requestId}] Authorization header set with ${tokenSource} token:`, `Bearer ${token.substring(0, 20)}...`);
     } else if (token) {
-      if (this.DEBUG) console.warn('⚠️ Ignoring malformed token (not a JWT)');
+      console.warn(`⚠️ [${requestId}] Ignoring malformed token (not a JWT)`);
     } else {
-      if (this.DEBUG) console.warn('⚠️ No token available for Authorization header');
+      console.warn(`⚠️ [${requestId}] No token available for Authorization header`);
     }
 
     // If sending FormData, let the browser set the correct multipart boundary
@@ -120,32 +145,80 @@ export class SupabaseAPI {
       delete headers['Content-Type'];
     }
 
+    // Step 4: Make the request
+    console.log(`📤 [${requestId}] Making request with headers:`, { 
+      hasAuth: !!headers.Authorization,
+      contentType: headers['Content-Type']
+    });
+    
     const response = await fetch(url, {
       ...options,
       headers,
     });
 
+    console.log(`📥 [${requestId}] Response status:`, response.status, response.statusText);
+
+    // Step 5: Handle 401 with comprehensive retry logic
     if (response.status === 401) {
-      // Try to silently refresh via Supabase and retry once
+      console.warn(`🚨 [${requestId}] Got 401 Unauthorized, attempting token refresh and retry...`);
+      
       try {
         if (supabase) {
-          const { data: { session } } = await supabase.auth.getSession();
-          const newToken = session?.access_token;
-          if (newToken) {
-            try { localStorage.setItem('actual-token', newToken); } catch {}
-            const retryHeaders: Record<string, string> = { ...headers, Authorization: `Bearer ${newToken}` };
+          console.log(`🔄 [${requestId}] Forcing Supabase session refresh...`);
+          
+          // Force a session refresh
+          const { data: { session }, error } = await supabase.auth.refreshSession();
+          console.log(`📋 [${requestId}] Refresh session result:`, {
+            hasSession: !!session,
+            hasUser: !!session?.user,
+            hasAccessToken: !!session?.access_token,
+            tokenLength: session?.access_token?.length,
+            error: error?.message
+          });
+          
+          if (error) {
+            console.error(`❌ [${requestId}] Session refresh failed:`, error);
+            // Try getSession as fallback
+            console.log(`🔄 [${requestId}] Trying getSession as fallback...`);
+            const { data: { session: fallbackSession } } = await supabase.auth.getSession();
+            if (fallbackSession?.access_token) {
+              console.log(`✅ [${requestId}] Got token from getSession fallback`);
+              try { localStorage.setItem('actual-token', fallbackSession.access_token); } catch {}
+              const retryHeaders: Record<string, string> = { ...headers, Authorization: `Bearer ${fallbackSession.access_token}` };
+              
+              console.log(`🔄 [${requestId}] Retrying request with fallback token...`);
+              const retryResp = await fetch(url, { ...options, headers: retryHeaders });
+              console.log(`📥 [${requestId}] Retry response status:`, retryResp.status);
+              
+              if (retryResp.ok) {
+                const retryText = await retryResp.text();
+                try { return JSON.parse(retryText); } catch { return retryText; }
+              }
+            }
+          } else if (session?.access_token) {
+            console.log(`✅ [${requestId}] Got fresh token from refresh`);
+            try { localStorage.setItem('actual-token', session.access_token); } catch {}
+            const retryHeaders: Record<string, string> = { ...headers, Authorization: `Bearer ${session.access_token}` };
+            
+            console.log(`🔄 [${requestId}] Retrying request with refreshed token...`);
             const retryResp = await fetch(url, { ...options, headers: retryHeaders });
+            console.log(`📥 [${requestId}] Retry response status:`, retryResp.status);
+            
             if (retryResp.ok) {
               const retryText = await retryResp.text();
               try { return JSON.parse(retryText); } catch { return retryText; }
             }
             const t = await retryResp.text();
             let d; try { d = JSON.parse(t); } catch { d = { message: t }; }
+            console.error(`❌ [${requestId}] Retry also failed:`, retryResp.status, d);
             throw new Error(`API Error (${retryResp.status}): ${JSON.stringify(d)}`);
           }
         }
-      } catch {}
-      // Fallthrough to normal error handling without clearing token
+      } catch (refreshError) {
+        console.error(`❌ [${requestId}] Token refresh process failed:`, refreshError);
+      }
+      // Fallthrough to normal error handling
+      console.error(`❌ [${requestId}] All retry attempts failed, throwing 401 error`);
     }
 
     if (!response.ok) {

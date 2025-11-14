@@ -67,29 +67,119 @@ export function ApiProvider({ children }: { children: ReactNode }) {
           isAuthRef.current = true;
           if (DEBUG) console.log('✅ Demo overlay active: forcing authenticated UI');
         } else {
-          // Authenticate: ensure a fresh JWT is available, then verify with an API call
+          // DEEP AUDIT: Enhanced authentication check with comprehensive debugging
+          console.log('🔐 Starting authentication check...');
+          
           try {
             let token = localStorage.getItem('actual-token');
             let isJwt = !!token && /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/.test(token!);
+            
+            console.log('🔑 Initial token state:', {
+              hasToken: !!token,
+              tokenLength: token?.length,
+              isJwt,
+              tokenPreview: token ? `${token.substring(0, 20)}...` : 'null'
+            });
+            
+            // Check token expiry if we have one
+            if (token && isJwt) {
+              try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                const exp = payload.exp * 1000;
+                const now = Date.now();
+                const timeToExpiry = exp - now;
+                console.log('⏰ Token expiry check:', {
+                  expiresAt: new Date(exp).toISOString(),
+                  currentTime: new Date(now).toISOString(),
+                  timeToExpiry: timeToExpiry,
+                  isExpiringSoon: timeToExpiry <= 300000 // 5 minutes
+                });
+                
+                if (timeToExpiry <= 300000) {
+                  console.log('⚠️ Token expires soon, forcing refresh');
+                  token = null;
+                  isJwt = false;
+                }
+              } catch (e) {
+                console.warn('⚠️ Failed to parse token expiry, treating as invalid:', e);
+                token = null;
+                isJwt = false;
+              }
+            }
+            
+            // Get fresh token from Supabase if needed
             if ((!token || !isJwt) && supabase) {
-              const { data: { session } } = await supabase.auth.getSession();
+              console.log('🔄 Getting fresh session from Supabase...');
+              const { data: { session }, error } = await supabase.auth.getSession();
+              
+              console.log('📋 Supabase session state:', {
+                hasSession: !!session,
+                hasUser: !!session?.user,
+                hasAccessToken: !!session?.access_token,
+                tokenLength: session?.access_token?.length,
+                userEmail: session?.user?.email,
+                error: error?.message
+              });
+              
+              if (error) {
+                console.error('❌ Supabase getSession error:', error);
+                throw new Error(`Supabase session error: ${error.message}`);
+              }
+              
               const newToken = session?.access_token;
               if (newToken) {
-                try { localStorage.setItem('actual-token', newToken); } catch {}
+                try { 
+                  localStorage.setItem('actual-token', newToken); 
+                  console.log('💾 Saved fresh token to localStorage');
+                } catch (e) {
+                  console.error('❌ Failed to save token to localStorage:', e);
+                }
                 token = newToken;
                 isJwt = true;
-                if (DEBUG) console.log('🔄 Retrieved fresh JWT from Supabase session');
+                console.log('✅ Using fresh token from Supabase session');
+              } else {
+                console.warn('⚠️ No access token in Supabase session - user needs to sign in');
+                setIsAuthenticated(false);
+                isAuthRef.current = false;
+                return;
               }
             }
 
+            // Test authentication with accounts call
             if (isJwt && !isAuthRef.current) {
-              await apiInstance.getAccounts();
-              setIsAuthenticated(true);
-              isAuthRef.current = true;
-              if (DEBUG) console.log('✅ Authenticated with hybrid API using JWT');
+              console.log('🧪 Testing authentication with getAccounts call...');
+              const startTime = Date.now();
+              
+              try {
+                const accounts = await apiInstance.getAccounts();
+                const duration = Date.now() - startTime;
+                
+                console.log('✅ Authentication successful:', {
+                  accountCount: accounts?.length || 0,
+                  duration: `${duration}ms`,
+                  authenticated: true
+                });
+                
+                setIsAuthenticated(true);
+                isAuthRef.current = true;
+              } catch (accountsError) {
+                console.error('❌ Authentication test failed with accounts call:', accountsError);
+                
+                // If it's a 401, the request layer should have handled retry
+                // If we still get here, authentication truly failed
+                setIsAuthenticated(false);
+                isAuthRef.current = false;
+                throw accountsError;
+              }
+            } else if (!isJwt) {
+              console.warn('⚠️ No valid JWT token available for authentication');
+              setIsAuthenticated(false);
+              isAuthRef.current = false;
+            } else {
+              console.log('ℹ️ Already authenticated, skipping auth check');
             }
           } catch (err) {
-            if (DEBUG) console.warn('❌ Authentication check failed, user needs to login', err);
+            console.error('❌ Authentication check failed:', err);
             setIsAuthenticated(false);
             isAuthRef.current = false;
           }
