@@ -5,14 +5,36 @@ import { supabase } from '@/lib/supabase-client';
 export function AuthCallback() {
   useEffect(() => {
     (async () => {
+      console.log('🔐 AuthCallback: Processing OAuth callback...');
+      
       try {
         if (supabase) {
-          await supabase.auth.exchangeCodeForSession(window.location.href);
+          console.log('🔐 AuthCallback: Exchanging code for session...');
+          const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+          
+          if (error) {
+            console.error('❌ AuthCallback: Session exchange failed:', error);
+          } else {
+            console.log('✅ AuthCallback: Session exchange successful');
+          }
         }
-      } catch (e) {}
-      try {
-        window.location.replace('/');
-      } catch {}
+      } catch (e) {
+        console.error('❌ AuthCallback: Exception during auth exchange:', e);
+      }
+      
+      // Redirect to dashboard after a brief delay to ensure token is saved
+      setTimeout(() => {
+        try {
+          console.log('🔐 AuthCallback: Redirecting to dashboard...');
+          window.location.replace('/');
+        } catch (e) {
+          console.error('❌ AuthCallback: Redirect failed:', e);
+          // Fallback redirect attempt
+          try {
+            window.location.href = '/';
+          } catch {}
+        }
+      }, 1000);
     })();
   }, []);
 

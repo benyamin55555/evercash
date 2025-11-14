@@ -105,30 +105,78 @@ function AuthenticatedApp() {
   }, [user?.id, profile?.onboarding_completed, loading, retryConnection]);
 
   const exitDemo = async () => {
-    if (!api) return;
-    setSeedingDemo(true);
-    try {
-      // If overlay is on, just disable and reload
-      if (isDemoOverlayEnabled()) {
-        setDemoOverlayEnabled(false);
-        try { localStorage.setItem('evercash_demo_exited', 'true'); } catch {}
-        setDemoMode(false);
-        setDemoStats(null);
-      } else {
-        await clearDemoData(api);
-        localStorage.setItem('evercash_demo_exited', 'true');
-        setDemoMode(false);
-        setDemoStats(null);
+    console.log('🚪 EXIT DEMO: Button clicked - starting immediate exit...');
+    
+    // Step 1: Clear demo state IMMEDIATELY - no async waits
+    if (isDemoOverlayEnabled()) {
+      console.log('🚪 EXIT DEMO: Disabling overlay mode...');
+      setDemoOverlayEnabled(false);
+      resetDemoOverlayData();
+    } else {
+      console.log('🚪 EXIT DEMO: Clearing seeded demo data...');
+      try {
+        if (api) await clearDemoData(api);
+      } catch (e) {
+        console.error('Failed to clear demo data:', e);
       }
-      // Mark onboarding complete on first exit
-      try { if (user) { await updateUserProfile(user.id, { onboarding_completed: true }); } } catch {}
-      // Re-init API to drop overlay wrapper immediately
-      try { await retryConnection(); } catch {}
-      // Force a full reload to guarantee non-demo data shows immediately
-      try { window.location.reload(); } catch { try { window.location.assign('/'); } catch {} }
-    } finally {
-      setSeedingDemo(false);
     }
+    
+    // Step 2: Set localStorage flags
+    try { 
+      localStorage.setItem('evercash_demo_exited', 'true');
+      console.log('🚪 EXIT DEMO: Set demo exited flag');
+    } catch {}
+    
+    // Step 3: Update profile in background (don't wait)
+    if (user) {
+      updateUserProfile(user.id, { onboarding_completed: true }).catch(e => 
+        console.error('Background profile update failed:', e)
+      );
+    }
+    
+    // Step 4: IMMEDIATE page reload - no delays, no fancy logic
+    console.log('🚪 EXIT DEMO: FORCING IMMEDIATE PAGE RELOAD...');
+    try {
+      // Clear any caches immediately
+      if (api && typeof api.clearCache === 'function') {
+        api.clearCache();
+      }
+    } catch {}
+    
+    // FORCE RELOAD IMMEDIATELY - multiple aggressive methods
+    // Method 1: Direct reload (50ms delay)
+    setTimeout(() => {
+      console.log('🚪 EXIT DEMO: Method 1 - window.location.reload()');
+      window.location.reload();
+    }, 50);
+    
+    // Method 2: Replace current page (100ms delay)
+    setTimeout(() => {
+      console.log('🚪 EXIT DEMO: Method 2 - window.location.replace()');
+      try { 
+        window.location.replace(window.location.pathname); 
+      } catch {
+        try { 
+          window.location.href = window.location.href; 
+        } catch {}
+      }
+    }, 100);
+    
+    // Method 3: Navigate to root (200ms delay)
+    setTimeout(() => {
+      console.log('🚪 EXIT DEMO: Method 3 - window.location.assign()');
+      try { 
+        window.location.assign('/'); 
+      } catch {}
+    }, 200);
+    
+    // Method 4: Nuclear option - full redirect (500ms delay)
+    setTimeout(() => {
+      console.log('🚪 EXIT DEMO: Method 4 - Nuclear redirect');
+      try {
+        window.location.href = window.location.origin + '/';
+      } catch {}
+    }, 500);
   };
 
   // Show loading state (only while API initializes)

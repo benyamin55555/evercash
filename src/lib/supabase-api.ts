@@ -76,6 +76,13 @@ export class SupabaseAPI {
     }
   }
 
+  // Public method to clear all caches (for demo exit)
+  public clearAllCache() {
+    console.log('🗑️ SupabaseAPI: Clearing all caches');
+    this.cache.clear();
+    this.pending.clear();
+  }
+
   private async request(endpoint: string, options: RequestInit = {}): Promise<any> {
     const url = `${this.baseUrl}${endpoint}`;
     const requestId = Math.random().toString(36).substring(7);

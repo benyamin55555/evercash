@@ -49,10 +49,14 @@ export interface ExpenseCategory {
 // Auth helpers
 export const signInWithGoogle = async () => {
   if (!supabase) throw new Error('Supabase not configured');
-  // Use current origin (localhost in dev, production in prod) for redirect
+  
+  // PROFESSIONAL OAUTH FIX: Always use your domain for redirect
+  // This makes Google show "Continue to app.evercash.in" instead of the ugly Supabase URL
   const redirectUrl = window.location.origin.includes('localhost') 
     ? window.location.origin 
-    : (import.meta.env.VITE_PUBLIC_APP_URL || window.location.origin);
+    : 'https://app.evercash.in';
+  
+  console.log('🔐 OAuth redirect will use:', `${redirectUrl}/auth/callback`);
   
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',

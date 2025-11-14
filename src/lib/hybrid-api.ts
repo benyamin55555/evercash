@@ -454,6 +454,14 @@ export class HybridAPI {
       summary: { total, count: filtered.length },
     };
   }
+
+  // Public method to clear all caches (for demo exit)
+  public clearCache() {
+    console.log('🗑️ HybridAPI: Clearing all caches');
+    if (this.supabaseAPI && typeof this.supabaseAPI.clearAllCache === 'function') {
+      this.supabaseAPI.clearAllCache();
+    }
+  }
 }
 
 // Global instance

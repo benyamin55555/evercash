@@ -18,8 +18,8 @@ import { toast } from "sonner";
 import type { Account as ApiAccount, Transaction as ApiTransaction, Category, Payee } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
 import { CurrencySelector } from "@/components/CurrencySelector";
-import { MobileNavButton } from "@/components/MobileNav";
 import { isDemoOverlayEnabled, setDemoOverlayEnabled, resetDemoOverlayData } from "@/lib/demo-overlay";
+import { MobileNavButton } from "@/components/MobileNav";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface BudgetData {
@@ -85,7 +85,25 @@ export default function Dashboard() {
   }, [categories]);
 
   const fetchedRef = useRef(false);
+  const apiInstanceRef = useRef<any>(null);
+  const demoModeRef = useRef(isDemoOverlayEnabled());
+  
   useEffect(() => {
+    const currentDemoMode = isDemoOverlayEnabled();
+    
+    // If demo mode changed or API instance changed, force refetch
+    if (apiInstanceRef.current !== api || demoModeRef.current !== currentDemoMode) {
+      console.log('📊 Dashboard: API or demo mode changed, forcing data refresh', {
+        apiChanged: apiInstanceRef.current !== api,
+        demoModeChanged: demoModeRef.current !== currentDemoMode,
+        newDemoMode: currentDemoMode
+      });
+      
+      apiInstanceRef.current = api;
+      demoModeRef.current = currentDemoMode;
+      fetchedRef.current = false; // Force refetch
+    }
+    
     if (!loading && api && !fetchedRef.current) {
       fetchedRef.current = true;
       fetchData();
