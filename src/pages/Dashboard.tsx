@@ -36,7 +36,7 @@ export default function Dashboard() {
   });
   const [editingTarget, setEditingTarget] = useState(false);
   const [targetInput, setTargetInput] = useState(netWorthTarget.toString());
-  const { api, loading } = useApi();
+  const { api, loading, retryConnection } = useApi();
   const DEBUG = (import.meta as any)?.env?.VITE_DEBUG_LOGS === 'true';
   const { theme } = useTheme();
   const { currentCurrency, setCurrency, formatAmount } = useSimpleCurrency();
@@ -85,7 +85,13 @@ export default function Dashboard() {
   }, [categories]);
 
   const fetchedRef = useRef(false);
+  const apiInstanceRef = useRef<any>(null);
   useEffect(() => {
+    // If the API instance identity changed (e.g., demo overlay toggled), mark for refetch
+    if (apiInstanceRef.current !== api) {
+      apiInstanceRef.current = api;
+      fetchedRef.current = false;
+    }
     if (!loading && api && !fetchedRef.current) {
       fetchedRef.current = true;
       fetchData();
@@ -279,7 +285,7 @@ export default function Dashboard() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
+              onClick={async () => {
                 const on = isDemoOverlayEnabled();
                 if (on) {
                   setDemoOverlayEnabled(false);
@@ -289,7 +295,10 @@ export default function Dashboard() {
                   resetDemoOverlayData();
                   setDemoOverlayEnabled(true);
                 }
-                window.location.reload();
+                // Re-init API and let effect refetch with the fresh instance
+                setIsLoading(true);
+                fetchedRef.current = false;
+                await retryConnection();
               }}
             >{isDemoOverlayEnabled() ? 'Exit Demo' : 'Demo Mode'}</Button>
             <Button
@@ -324,7 +333,7 @@ export default function Dashboard() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
+              onClick={async () => {
                 const on = isDemoOverlayEnabled();
                 if (on) {
                   setDemoOverlayEnabled(false);
@@ -334,7 +343,10 @@ export default function Dashboard() {
                   resetDemoOverlayData();
                   setDemoOverlayEnabled(true);
                 }
-                window.location.reload();
+                // Re-init API and let effect refetch with the fresh instance
+                setIsLoading(true);
+                fetchedRef.current = false;
+                await retryConnection();
               }}
             >{isDemoOverlayEnabled() ? 'Exit Demo' : 'Demo Mode'}</Button>
             <Button
