@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback, useRef } from 'react';
 import { initHybridAPI, type HybridAPI } from '@/lib/hybrid-api';
 import { isDemoOverlayEnabled, createDemoOverlayAPI } from '@/lib/demo-overlay';
+import { supabase } from '@/lib/supabase-client';
 import { toast } from 'sonner';
 
 interface ApiContextType {
@@ -66,10 +67,21 @@ export function ApiProvider({ children }: { children: ReactNode }) {
           isAuthRef.current = true;
           if (DEBUG) console.log('✅ Demo overlay active: forcing authenticated UI');
         } else {
-          // Authenticate only if a real JWT exists AND an authenticated call succeeds
+          // Authenticate: ensure a fresh JWT is available, then verify with an API call
           try {
-            const token = localStorage.getItem('actual-token');
-            const isJwt = !!token && /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/.test(token);
+            let token = localStorage.getItem('actual-token');
+            let isJwt = !!token && /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/.test(token!);
+            if ((!token || !isJwt) && supabase) {
+              const { data: { session } } = await supabase.auth.getSession();
+              const newToken = session?.access_token;
+              if (newToken) {
+                try { localStorage.setItem('actual-token', newToken); } catch {}
+                token = newToken;
+                isJwt = true;
+                if (DEBUG) console.log('🔄 Retrieved fresh JWT from Supabase session');
+              }
+            }
+
             if (isJwt && !isAuthRef.current) {
               await apiInstance.getAccounts();
               setIsAuthenticated(true);

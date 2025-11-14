@@ -83,17 +83,35 @@ export class SupabaseAPI {
       ...((options.headers as Record<string, string>) || {}),
     };
 
-    // Get fresh token each time
-    const token = localStorage.getItem('actual-token');
-    if (this.DEBUG) console.log('🔑 Token from localStorage:', token ? `${token.substring(0, 20)}...` : 'null');
-    const isJwt = !!token && /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/.test(token);
+    // Ensure we have a fresh access token before making the request
+    let token = null as string | null;
+    let isJwt = false;
+    try {
+      token = localStorage.getItem('actual-token');
+      if (this.DEBUG) console.log('🔑 Token from localStorage:', token ? `${token.substring(0, 20)}...` : 'null');
+      isJwt = !!token && /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/.test(token!);
+      // If missing or malformed, ask Supabase for the current session token
+      if ((!token || !isJwt) && supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        const newToken = session?.access_token || null;
+        if (newToken) {
+          try { localStorage.setItem('actual-token', newToken); } catch {}
+          token = newToken;
+          isJwt = true;
+          if (this.DEBUG) console.log('🔄 Fetched fresh token from Supabase session');
+        }
+      }
+    } catch (e) {
+      if (this.DEBUG) console.warn('⚠️ Failed to ensure fresh token before request:', e);
+    }
+
     if (isJwt && token) {
       headers['Authorization'] = `Bearer ${token}`;
       if (this.DEBUG) console.log('🔐 Authorization header set:', `Bearer ${token.substring(0, 20)}...`);
     } else if (token) {
       if (this.DEBUG) console.warn('⚠️ Ignoring malformed token (not a JWT)');
     } else {
-      if (this.DEBUG) console.warn('⚠️ No token found in localStorage!');
+      if (this.DEBUG) console.warn('⚠️ No token available for Authorization header');
     }
 
     // If sending FormData, let the browser set the correct multipart boundary
