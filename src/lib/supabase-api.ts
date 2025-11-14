@@ -77,25 +77,14 @@ export class SupabaseAPI {
 
   private async request(endpoint: string, options: RequestInit = {}): Promise<any> {
     const url = `${this.baseUrl}${endpoint}`;
-    // Always try to sync the latest Supabase session token before making a request
-    let token = localStorage.getItem('actual-token');
-    try {
-      if (supabase) {
-        const { data: { session } } = await supabase.auth.getSession();
-        const supaToken = session?.access_token;
-        if (supaToken && supaToken !== token) {
-          token = supaToken;
-          try { localStorage.setItem('actual-token', supaToken); } catch {}
-        }
-      }
-    } catch {}
-
+    
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...((options.headers as Record<string, string>) || {}),
     };
 
-    // Use the freshest token we have
+    // Get fresh token each time
+    const token = localStorage.getItem('actual-token');
     if (this.DEBUG) console.log('🔑 Token from localStorage:', token ? `${token.substring(0, 20)}...` : 'null');
     const isJwt = !!token && /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/.test(token);
     if (isJwt && token) {
@@ -113,42 +102,21 @@ export class SupabaseAPI {
       delete headers['Content-Type'];
     }
 
-    // Add a timeout to avoid hanging forever
-    const controller = new AbortController();
-    const timeoutMs = Number((import.meta as any)?.env?.VITE_API_TIMEOUT_MS || 15000);
-    const timeoutId = setTimeout(() => controller.abort(), Math.max(3000, timeoutMs));
-    let response: Response;
-    try {
-      response = await fetch(url, {
-        ...options,
-        headers,
-        signal: controller.signal,
-      });
-    } catch (e) {
-      clearTimeout(timeoutId);
-      if ((e as any)?.name === 'AbortError') {
-        throw new Error(`API request timed out after ${Math.max(3000, timeoutMs)}ms: ${endpoint}`);
-      }
-      throw e;
-    } finally {
-      clearTimeout(timeoutId);
-    }
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
 
     if (response.status === 401) {
-      // Try to force-refresh via Supabase and retry once
+      // Try to silently refresh via Supabase and retry once
       try {
         if (supabase) {
-          // Explicitly refresh session to get a fresh access token
-          const { data, error } = await supabase.auth.refreshSession();
-          const newToken = data?.session?.access_token;
-          if (this.DEBUG) console.warn('🔁 401 received, refreshing session...', { hasNewToken: !!newToken, error });
+          const { data: { session } } = await supabase.auth.getSession();
+          const newToken = session?.access_token;
           if (newToken) {
             try { localStorage.setItem('actual-token', newToken); } catch {}
             const retryHeaders: Record<string, string> = { ...headers, Authorization: `Bearer ${newToken}` };
-            const retryController = new AbortController();
-            const retryTimeout = setTimeout(() => retryController.abort(), Math.max(3000, timeoutMs));
-            const retryResp = await fetch(url, { ...options, headers: retryHeaders, signal: retryController.signal });
-            clearTimeout(retryTimeout);
+            const retryResp = await fetch(url, { ...options, headers: retryHeaders });
             if (retryResp.ok) {
               const retryText = await retryResp.text();
               try { return JSON.parse(retryText); } catch { return retryText; }
@@ -156,25 +124,6 @@ export class SupabaseAPI {
             const t = await retryResp.text();
             let d; try { d = JSON.parse(t); } catch { d = { message: t }; }
             throw new Error(`API Error (${retryResp.status}): ${JSON.stringify(d)}`);
-          } else {
-            // Fallback: try getSession if refresh failed to provide a session
-            const { data: { session } } = await supabase.auth.getSession();
-            const fallbackToken = session?.access_token;
-            if (fallbackToken) {
-              try { localStorage.setItem('actual-token', fallbackToken); } catch {}
-              const retryHeaders: Record<string, string> = { ...headers, Authorization: `Bearer ${fallbackToken}` };
-              const retryController2 = new AbortController();
-              const retryTimeout2 = setTimeout(() => retryController2.abort(), Math.max(3000, timeoutMs));
-              const retryResp = await fetch(url, { ...options, headers: retryHeaders, signal: retryController2.signal });
-              clearTimeout(retryTimeout2);
-              if (retryResp.ok) {
-                const retryText = await retryResp.text();
-                try { return JSON.parse(retryText); } catch { return retryText; }
-              }
-              const t = await retryResp.text();
-              let d; try { d = JSON.parse(t); } catch { d = { message: t }; }
-              throw new Error(`API Error (${retryResp.status}): ${JSON.stringify(d)}`);
-            }
           }
         }
       } catch {}

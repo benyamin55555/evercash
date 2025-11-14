@@ -66,31 +66,18 @@ export function ApiProvider({ children }: { children: ReactNode }) {
           isAuthRef.current = true;
           if (DEBUG) console.log('✅ Demo overlay active: forcing authenticated UI');
         } else {
-          // Relaxed gating: if a JWT exists, consider the user authenticated immediately
-          // and warm up the connection in the background. This avoids getting stuck on the
-          // loading screen if the first accounts call 401s before Supabase refreshes.
+          // Authenticate only if a real JWT exists AND an authenticated call succeeds
           try {
             const token = localStorage.getItem('actual-token');
             const isJwt = !!token && /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/.test(token);
-            if (isJwt) {
-              if (!isAuthRef.current) {
-                setIsAuthenticated(true);
-                isAuthRef.current = true;
-                if (DEBUG) console.log('✅ JWT present; enabling authenticated UI');
-              }
-              // Warm call without blocking UI; ignore errors
-              setTimeout(() => {
-                apiInstance.getAccounts().catch((warmErr: any) => {
-                  if (DEBUG) console.warn('⚠️ Warm accounts check failed (non-blocking):', warmErr);
-                });
-              }, 50);
-            } else {
-              setIsAuthenticated(false);
-              isAuthRef.current = false;
-              if (DEBUG) console.log('ℹ️ No JWT present; unauthenticated UI');
+            if (isJwt && !isAuthRef.current) {
+              await apiInstance.getAccounts();
+              setIsAuthenticated(true);
+              isAuthRef.current = true;
+              if (DEBUG) console.log('✅ Authenticated with hybrid API using JWT');
             }
           } catch (err) {
-            if (DEBUG) console.warn('❌ Auth gating encountered an error', err);
+            if (DEBUG) console.warn('❌ Authentication check failed, user needs to login', err);
             setIsAuthenticated(false);
             isAuthRef.current = false;
           }
