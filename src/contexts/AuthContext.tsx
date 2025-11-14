@@ -141,11 +141,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   const fetchProfile = async (userId: string) => {
+    console.log('👤 AuthContext: Starting fetchProfile for userId:', userId);
     try {
+      console.log('👤 AuthContext: Calling getUserProfile...');
       let userProfile = await getUserProfile(userId);
+      console.log('👤 AuthContext: getUserProfile result:', userProfile ? 'Profile found' : 'No profile found');
       
       // Create profile if it doesn't exist
       if (!userProfile && user) {
+        console.log('👤 AuthContext: Creating new user profile...');
         userProfile = await createUserProfile({
           id: userId,
           email: user.email!,
@@ -153,12 +157,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           avatar_url: user.user_metadata.avatar_url || '',
           onboarding_completed: false,
         });
+        console.log('👤 AuthContext: Created new profile:', !!userProfile);
       }
       
+      console.log('👤 AuthContext: Setting profile state:', userProfile);
       setProfile(userProfile);
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('❌ AuthContext: Error fetching profile:', error);
     } finally {
+      console.log('👤 AuthContext: fetchProfile completed, setting loading to false');
       setLoading(false);
     }
   };

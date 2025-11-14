@@ -35,6 +35,7 @@ import { seedDemoData, clearDemoData } from "@/lib/seed-demo";
 import { isDemoOverlayEnabled, setDemoOverlayEnabled, resetDemoOverlayData } from "@/lib/demo-overlay";
 import { updateUserProfile } from "@/lib/supabase-client";
 import { authManager } from "@/lib/auth-manager";
+import { shouldShowDemoForNewUser, markDemoAsSeen, hasSeenDemo, resetDemoCookies } from "@/lib/demo-cookies";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
@@ -49,6 +50,34 @@ function AuthenticatedApp() {
   const [demoStats, setDemoStats] = useState<{ netWorth: number; txCount: number } | null>(null);
   const [seedingDemo, setSeedingDemo] = useState(false);
   const [showDemoPrompt, setShowDemoPrompt] = useState(false);
+
+  // Global debug functions for testing demo system
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).resetDemo = () => {
+        console.log('🔧 RESETTING DEMO SYSTEM FOR TESTING');
+        resetDemoCookies();
+        localStorage.removeItem('evercash_demo_exited');
+        resetDemoOverlayData();
+        setDemoOverlayEnabled(false);
+        if (user) {
+          updateUserProfile(user.id, { onboarding_completed: false }).then(() => {
+            console.log('Profile reset to new user state');
+            window.location.reload();
+          });
+        }
+      };
+      (window as any).checkDemoState = () => {
+        console.log('🔍 CURRENT DEMO STATE:', {
+          hasSeenDemo: hasSeenDemo(),
+          isDemoEnabled: isDemoOverlayEnabled(),
+          onboardingCompleted: profile?.onboarding_completed,
+          shouldShowDemo: shouldShowDemoForNewUser(isAuthenticated, profile)
+        });
+      };
+      console.log('🔧 Demo debug functions available: window.resetDemo(), window.checkDemoState()');
+    }
+  }, [user, profile, isAuthenticated]);
 
   // When token appears (after Google sign-in), ensure API session re-initializes
   useEffect(() => {
@@ -89,20 +118,66 @@ function AuthenticatedApp() {
     return () => { cancelled = true; };
   }, [api, isAuthenticated]);
 
-  // Sync demo overlay with server-side onboarding flag (prompt new users instead of auto-enabling)
+  // Cookie-based demo system for new users
   useEffect(() => {
-    if (!user || profile == null) return;
-    // Avoid racing with API initialization; re-run once loading flips to false
-    if (loading) return;
+    console.log('🍪 Demo system useEffect triggered:', {
+      loading,
+      hasUser: !!user,
+      hasProfile: !!profile,
+      authLoading,
+      isAuthenticated
+    });
+    
+    if (loading || !user || authLoading) {
+      console.log('🍪 Demo system: Waiting for data...', {
+        loading,
+        user: !!user,
+        profile: !!profile,
+        authLoading
+      });
+      return;
+    }
+    
+    // If profile is still null but user exists and auth is done, treat as new user
+    const effectiveProfile = profile || { onboarding_completed: false };
+    console.log('🍪 Demo system: Using effective profile:', {
+      hasProfile: !!profile,
+      effectiveProfile
+    });
+    
     const enabled = isDemoOverlayEnabled();
-    if (profile.onboarding_completed === false && !enabled) {
-      setShowDemoPrompt(true);
-    } else if (profile.onboarding_completed === true && enabled) {
+    const shouldShowDemo = shouldShowDemoForNewUser(isAuthenticated, effectiveProfile);
+    
+    console.log('🍪 Demo system check:', {
+      userEmail: user.email,
+      isAuthenticated,
+      onboardingCompleted: effectiveProfile.onboarding_completed,
+      hasSeenDemoBefore: hasSeenDemo(),
+      shouldShowDemo,
+      currentlyEnabled: enabled,
+      profileData: effectiveProfile
+    });
+    
+    // Auto-enable demo for new users who haven't seen it before
+    if (shouldShowDemo && !enabled) {
+      console.log('🍪 Auto-enabling demo for new user');
+      setDemoOverlayEnabled(true);
+      setDemoMode(true);
+      retryConnection();
+    }
+    // Disable demo for returning users who have seen it
+    else if (!shouldShowDemo && enabled) {
+      console.log('🍪 Disabling demo for returning user');
       setDemoOverlayEnabled(false);
       setDemoMode(false);
       retryConnection();
     }
-  }, [user?.id, profile?.onboarding_completed, loading, retryConnection]);
+    // Show demo prompt only if they haven't seen demo and it's not auto-enabled
+    else if (effectiveProfile.onboarding_completed === false && !enabled && !hasSeenDemo()) {
+      console.log('🍪 Showing demo prompt for new user');
+      setShowDemoPrompt(true);
+    }
+  }, [user?.id, profile?.onboarding_completed, loading, authLoading, isAuthenticated, retryConnection]);
 
   const exitDemo = async () => {
     console.log('🚪 EXIT DEMO: Button clicked - starting immediate exit...');
@@ -121,11 +196,15 @@ function AuthenticatedApp() {
       }
     }
     
-    // Step 2: Set localStorage flags
+    // Step 2: Set localStorage flags AND demo cookie
     try { 
       localStorage.setItem('evercash_demo_exited', 'true');
       console.log('🚪 EXIT DEMO: Set demo exited flag');
     } catch {}
+    
+    // Step 2.5: Mark demo as seen in cookies (CRITICAL - prevents auto-demo on future visits)
+    markDemoAsSeen();
+    console.log('🍪 EXIT DEMO: Marked demo as seen in cookies');
     
     // Step 3: Update profile in background (don't wait)
     if (user) {
@@ -276,9 +355,11 @@ function AuthenticatedApp() {
             <Button
               variant="outline"
               onClick={async () => {
-                // Don't show again
+                // Mark demo as seen and don't show again
+                markDemoAsSeen();
                 try { if (user) await updateUserProfile(user.id, { onboarding_completed: true }); } catch {}
                 setShowDemoPrompt(false);
+                console.log('🍪 User skipped demo - marked as seen');
               }}
             >Skip for now</Button>
             <Button
